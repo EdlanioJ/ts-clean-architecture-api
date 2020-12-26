@@ -34,20 +34,6 @@
     "ts-jest": "^26.4.4",
     "typescript": "^4.1.3"
   },
-  "husky": {
-    "hooks": {
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
-      "prepare-commit-msg": "exec < /dev/tty && git cz --hook || true",
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.ts": [
-      "yarn eslint --fix",
-      "cross-env CI=true yarn test --bail --findRelatedTests",
-      "git add"
-    ]
-  },
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
