@@ -31,10 +31,18 @@
       {
         "newlinesBetween": "always",
         "groups": [
-          "/^express/",
           "module",
-          "/^@/"
-        ]
+          "/^@/",
+          [
+            "parent",
+            "sibling",
+            "index"
+          ]
+        ],
+        "alphabetize": {
+          "order": "asc",
+          "ignoreCase": true
+        }
       }
     ]
   }
