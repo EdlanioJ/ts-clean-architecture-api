@@ -1,5 +1,3 @@
-import { type } from 'os';
-
 export interface Authentication {
   auth: (params: Authentication.Params) => Promise<Authentication.Result>;
 }
