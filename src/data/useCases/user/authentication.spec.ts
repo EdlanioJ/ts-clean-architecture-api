@@ -56,35 +56,35 @@ const mockAuthParams = (): Authentication.Params => ({
 });
 type SutType = {
   sut: AuthenticationUseCase;
-  getUserByEmailRepository: GetUserByEmailRepositorySpy;
-  hashComparer: HashComparerSpy;
-  encrypter: EncrypterSpy;
+  getUserByEmailRepositorySpy: GetUserByEmailRepositorySpy;
+  hashComparerSpy: HashComparerSpy;
+  encrypterSpy: EncrypterSpy;
 };
 
 const makeSut = (): SutType => {
-  const getUserByEmailRepository = new GetUserByEmailRepositorySpy();
-  const hashComparer = new HashComparerSpy();
-  const encrypter = new EncrypterSpy();
+  const getUserByEmailRepositorySpy = new GetUserByEmailRepositorySpy();
+  const hashComparerSpy = new HashComparerSpy();
+  const encrypterSpy = new EncrypterSpy();
   const sut = new AuthenticationUseCase(
-    encrypter,
-    getUserByEmailRepository,
-    hashComparer
+    encrypterSpy,
+    getUserByEmailRepositorySpy,
+    hashComparerSpy
   );
 
-  return { encrypter, getUserByEmailRepository, hashComparer, sut };
+  return { encrypterSpy, getUserByEmailRepositorySpy, hashComparerSpy, sut };
 };
 describe('Authentication UseCase', () => {
   it('Should call GetUserByEmailRepository with correct email', async () => {
-    const { getUserByEmailRepository, sut } = makeSut();
+    const { getUserByEmailRepositorySpy, sut } = makeSut();
     const authParams = mockAuthParams();
     await sut.auth(authParams);
-    expect(getUserByEmailRepository.email).toBe(authParams.email);
+    expect(getUserByEmailRepositorySpy.email).toBe(authParams.email);
   });
 
   it('Should throw if GetUserByEmailRepository throws', () => {
-    const { getUserByEmailRepository, sut } = makeSut();
+    const { getUserByEmailRepositorySpy, sut } = makeSut();
     jest
-      .spyOn(getUserByEmailRepository, 'getByEmail')
+      .spyOn(getUserByEmailRepositorySpy, 'getByEmail')
       .mockImplementationOnce(() => {
         throw new Error();
       });
@@ -94,9 +94,9 @@ describe('Authentication UseCase', () => {
   });
 
   it('Should throw if GetUserByEmailRepository returns undefined', async () => {
-    const { getUserByEmailRepository, sut } = makeSut();
+    const { getUserByEmailRepositorySpy, sut } = makeSut();
     jest
-      .spyOn(getUserByEmailRepository, 'getByEmail')
+      .spyOn(getUserByEmailRepositorySpy, 'getByEmail')
       .mockResolvedValueOnce(undefined);
 
     const authParams = mockAuthParams();
@@ -106,18 +106,20 @@ describe('Authentication UseCase', () => {
   });
 
   it('Should call HashComparer with correct values', async () => {
-    const { sut, hashComparer, getUserByEmailRepository } = makeSut();
+    const { sut, hashComparerSpy, getUserByEmailRepositorySpy } = makeSut();
     const authParams = mockAuthParams();
 
     await sut.auth(authParams);
 
-    expect(hashComparer.plaintext).toBe(authParams.password);
-    expect(hashComparer.digest).toBe(getUserByEmailRepository.user.password);
+    expect(hashComparerSpy.plaintext).toBe(authParams.password);
+    expect(hashComparerSpy.digest).toBe(
+      getUserByEmailRepositorySpy.user.password
+    );
   });
 
   it('Should throws if HashComparer throws', () => {
-    const { sut, hashComparer } = makeSut();
-    jest.spyOn(hashComparer, 'compare').mockImplementationOnce(() => {
+    const { sut, hashComparerSpy } = makeSut();
+    jest.spyOn(hashComparerSpy, 'compare').mockImplementationOnce(() => {
       throw new Error();
     });
     const authParams = mockAuthParams();
@@ -128,8 +130,8 @@ describe('Authentication UseCase', () => {
   });
 
   it('Should throws if HashComparer returns false', async () => {
-    const { sut, hashComparer, getUserByEmailRepository } = makeSut();
-    jest.spyOn(hashComparer, 'compare').mockResolvedValueOnce(false);
+    const { sut, hashComparerSpy, getUserByEmailRepositorySpy } = makeSut();
+    jest.spyOn(hashComparerSpy, 'compare').mockResolvedValueOnce(false);
 
     const authParams = mockAuthParams();
 
@@ -139,17 +141,17 @@ describe('Authentication UseCase', () => {
   });
 
   it('Should call Encrypter with correct values', async () => {
-    const { encrypter, getUserByEmailRepository, sut } = makeSut();
+    const { encrypterSpy, getUserByEmailRepositorySpy, sut } = makeSut();
     const authParams = mockAuthParams();
 
     await sut.auth(authParams);
 
-    expect(encrypter.plaintext).toBe(getUserByEmailRepository.user.id);
+    expect(encrypterSpy.plaintext).toBe(getUserByEmailRepositorySpy.user.id);
   });
 
   it('Should throw if Encrypter throws', async () => {
-    const { encrypter, sut } = makeSut();
-    jest.spyOn(encrypter, 'encrypt').mockImplementationOnce(() => {
+    const { encrypterSpy, sut } = makeSut();
+    jest.spyOn(encrypterSpy, 'encrypt').mockImplementationOnce(() => {
       throw new Error();
     });
     const authParams = mockAuthParams();
@@ -160,11 +162,11 @@ describe('Authentication UseCase', () => {
   });
 
   it('Should return an Authentication.Result', async () => {
-    const { sut, encrypter } = makeSut();
+    const { sut, encrypterSpy } = makeSut();
     const authParams = mockAuthParams();
 
     const { token } = await sut.auth(authParams);
 
-    expect(token).toBe(encrypter.cyphertext);
+    expect(token).toBe(encrypterSpy.cyphertext);
   });
 });
