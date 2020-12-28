@@ -1,5 +1,6 @@
 import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
 import { UserModel } from '@/data/protocols/db/user/user';
+import { AuthenticationError } from '@/domain/errors/user/authemtication';
 import { Authentication } from '@/domain/useCases/user/authentication';
 
 import { AuthenticationUseCase } from './authentication';
@@ -15,7 +16,7 @@ class GetUserByEmailRepositorySpy implements GetUserByEmailRepository {
     username: 'example',
   };
 
-  async getByEmail(email: string): Promise<UserModel> {
+  async getByEmail(email: string): Promise<UserModel | undefined> {
     this.email = email;
 
     return this.user;
@@ -54,5 +55,17 @@ describe('Authentication UseCase', () => {
     const promise = sut.auth(mockAuthParams());
 
     expect(promise).rejects.toThrowError();
+  });
+
+  it('Should throw if GetUserByEmailRepository returns undefined', () => {
+    const { getUserByEmailRepository, sut } = makeSut();
+    jest
+      .spyOn(getUserByEmailRepository, 'getByEmail')
+      .mockImplementationOnce(async () => undefined);
+
+    const authParams = mockAuthParams();
+    const promise = sut.auth(authParams);
+
+    expect(promise).rejects.toThrow(new AuthenticationError('email'));
   });
 });

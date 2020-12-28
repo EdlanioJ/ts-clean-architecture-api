@@ -1,4 +1,5 @@
 import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
+import { AuthenticationError } from '@/domain/errors/user/authemtication';
 import { Authentication } from '@/domain/useCases/user/authentication';
 
 export class AuthenticationUseCase {
@@ -7,6 +8,10 @@ export class AuthenticationUseCase {
   ) {}
 
   async auth(authParams: Authentication.Params): Promise<void> {
-    await this.getUserByEmailRepository.getByEmail(authParams.email);
+    const user = await this.getUserByEmailRepository.getByEmail(
+      authParams.email
+    );
+
+    if (!user) throw new AuthenticationError('email');
   }
 }
