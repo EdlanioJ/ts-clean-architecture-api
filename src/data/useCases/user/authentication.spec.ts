@@ -75,16 +75,16 @@ describe('Authentication UseCase', () => {
     expect(promise).rejects.toThrowError();
   });
 
-  it('Should throw if GetUserByEmailRepository returns undefined', () => {
+  it('Should throw if GetUserByEmailRepository returns undefined', async () => {
     const { getUserByEmailRepository, sut } = makeSut();
     jest
       .spyOn(getUserByEmailRepository, 'getByEmail')
-      .mockImplementationOnce(async () => undefined);
+      .mockResolvedValueOnce(undefined);
 
     const authParams = mockAuthParams();
     const promise = sut.auth(authParams);
 
-    expect(promise).rejects.toThrow(new AuthenticationError('email'));
+    await expect(promise).rejects.toThrow(new AuthenticationError('email'));
   });
 
   it('Should call HashComparer with correct values', async () => {
