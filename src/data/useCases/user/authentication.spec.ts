@@ -112,7 +112,7 @@ describe('Authentication UseCase', () => {
   });
 
   it('Should throws if HashComparer throws', () => {
-    const { sut, hashComparer, getUserByEmailRepository } = makeSut();
+    const { sut, hashComparer } = makeSut();
     jest.spyOn(hashComparer, 'compare').mockImplementationOnce(() => {
       throw new Error();
     });
@@ -141,5 +141,17 @@ describe('Authentication UseCase', () => {
     await sut.auth(authParams);
 
     expect(encrypter.plaintext).toBe(getUserByEmailRepository.user.id);
+  });
+
+  it('Should throw if Encrypter throws', async () => {
+    const { encrypter, sut } = makeSut();
+    jest.spyOn(encrypter, 'hash').mockImplementationOnce(() => {
+      throw new Error();
+    });
+    const authParams = mockAuthParams();
+
+    const promise = sut.auth(authParams);
+
+    await expect(promise).rejects.toThrow();
   });
 });
