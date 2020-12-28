@@ -1,3 +1,4 @@
+import { Encrypter } from '@/data/protocols/cryptography/encrypter';
 import { HashComparer } from '@/data/protocols/cryptography/hashComparer';
 import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
 import { UserModel } from '@/data/protocols/db/user/user';
@@ -37,6 +38,13 @@ class HashComparerSpy implements HashComparer {
     return this.isValid;
   }
 }
+class EncrypterSpy implements Encrypter {
+  plaintext!: string;
+
+  async hash(plaintext: string): Promise<void> {
+    this.plaintext = plaintext;
+  }
+}
 
 const mockAuthParams = (): Authentication.Params => ({
   email: 'example@email.com',
@@ -46,14 +54,20 @@ type SutType = {
   sut: AuthenticationUseCase;
   getUserByEmailRepository: GetUserByEmailRepositorySpy;
   hashComparer: HashComparerSpy;
+  encrypter: EncrypterSpy;
 };
 
 const makeSut = (): SutType => {
   const getUserByEmailRepository = new GetUserByEmailRepositorySpy();
   const hashComparer = new HashComparerSpy();
-  const sut = new AuthenticationUseCase(getUserByEmailRepository, hashComparer);
+  const encrypter = new EncrypterSpy();
+  const sut = new AuthenticationUseCase(
+    encrypter,
+    getUserByEmailRepository,
+    hashComparer
+  );
 
-  return { getUserByEmailRepository, hashComparer, sut };
+  return { encrypter, getUserByEmailRepository, hashComparer, sut };
 };
 describe('Authentication UseCase', () => {
   it('Should call GetUserByEmailRepository with correct email', async () => {
@@ -118,5 +132,14 @@ describe('Authentication UseCase', () => {
     const promise = sut.auth(authParams);
 
     await expect(promise).rejects.toThrow(new AuthenticationError('password'));
+  });
+
+  it('Should call Ebcrypter with correct values', async () => {
+    const { encrypter, getUserByEmailRepository, sut } = makeSut();
+    const authParams = mockAuthParams();
+
+    await sut.auth(authParams);
+
+    expect(encrypter.plaintext).toBe(getUserByEmailRepository.user.id);
   });
 });
