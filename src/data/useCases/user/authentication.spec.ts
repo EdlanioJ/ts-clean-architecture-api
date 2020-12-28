@@ -1,4 +1,4 @@
-import { HashComparer } from '@/data/protocols/cryptography/encrypter';
+import { HashComparer } from '@/data/protocols/cryptography/hashComparer';
 import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
 import { UserModel } from '@/data/protocols/db/user/user';
 import { AuthenticationError } from '@/domain/errors/user/authemtication';
@@ -28,9 +28,13 @@ class HashComparerSpy implements HashComparer {
 
   digest!: string;
 
-  async compare(plaintext: string, digest: string) {
+  isValid = true;
+
+  async compare(plaintext: string, digest: string): Promise<boolean> {
     this.digest = digest;
     this.plaintext = plaintext;
+
+    return this.isValid;
   }
 }
 
@@ -103,5 +107,16 @@ describe('Authentication UseCase', () => {
     const promise = sut.auth(authParams);
 
     expect(promise).rejects.toThrowError();
+  });
+
+  it('Should throws if HashComparer returns false', async () => {
+    const { sut, hashComparer, getUserByEmailRepository } = makeSut();
+    jest.spyOn(hashComparer, 'compare').mockResolvedValueOnce(false);
+
+    const authParams = mockAuthParams();
+
+    const promise = sut.auth(authParams);
+
+    await expect(promise).rejects.toThrow(new AuthenticationError('password'));
   });
 });

@@ -16,6 +16,11 @@ export class AuthenticationUseCase {
 
     if (!user) throw new AuthenticationError('email');
 
-    await this.hashComparer.compare(authParams.password, user.password);
+    const isValid = await this.hashComparer.compare(
+      authParams.password,
+      user.password
+    );
+
+    if (!isValid) throw new AuthenticationError('password');
   }
 }
