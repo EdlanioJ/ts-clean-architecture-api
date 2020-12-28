@@ -1,4 +1,4 @@
-import { HashComparer } from '@/data/protocols/cryptography/encrypter';
+import { HashComparer } from '@/data/protocols/cryptography/hashComparer';
 import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
 import { AuthenticationError } from '@/domain/errors/user/authemtication';
 import { Authentication } from '@/domain/useCases/user/authentication';
