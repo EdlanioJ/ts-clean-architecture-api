@@ -25,6 +25,6 @@ export class AuthenticationUseCase {
 
     if (!isValid) throw new AuthenticationError('password');
 
-    await this.encrypter.hash(user.id);
+    await this.encrypter.encrypt(user.id);
   }
 }

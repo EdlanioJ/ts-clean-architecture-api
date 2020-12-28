@@ -1,3 +1,3 @@
 export interface Encrypter {
-  hash: (plaintext: string) => Promise<void>;
+  encrypt: (plaintext: string) => Promise<void>;
 }

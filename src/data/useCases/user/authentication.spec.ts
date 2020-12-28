@@ -41,7 +41,7 @@ class HashComparerSpy implements HashComparer {
 class EncrypterSpy implements Encrypter {
   plaintext!: string;
 
-  async hash(plaintext: string): Promise<void> {
+  async encrypt(plaintext: string): Promise<void> {
     this.plaintext = plaintext;
   }
 }
@@ -134,7 +134,7 @@ describe('Authentication UseCase', () => {
     await expect(promise).rejects.toThrow(new AuthenticationError('password'));
   });
 
-  it('Should call Ebcrypter with correct values', async () => {
+  it('Should call Encrypter with correct values', async () => {
     const { encrypter, getUserByEmailRepository, sut } = makeSut();
     const authParams = mockAuthParams();
 
@@ -145,7 +145,7 @@ describe('Authentication UseCase', () => {
 
   it('Should throw if Encrypter throws', async () => {
     const { encrypter, sut } = makeSut();
-    jest.spyOn(encrypter, 'hash').mockImplementationOnce(() => {
+    jest.spyOn(encrypter, 'encrypt').mockImplementationOnce(() => {
       throw new Error();
     });
     const authParams = mockAuthParams();
