@@ -1,3 +1,4 @@
+import { HashComparer } from '@/data/protocols/cryptography/encrypter';
 import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
 import { UserModel } from '@/data/protocols/db/user/user';
 import { AuthenticationError } from '@/domain/errors/user/authemtication';
@@ -22,6 +23,17 @@ class GetUserByEmailRepositorySpy implements GetUserByEmailRepository {
     return this.user;
   }
 }
+class HashComparerSpy implements HashComparer {
+  plaintext!: string;
+
+  digest!: string;
+
+  async compare(plaintext: string, digest: string) {
+    this.digest = digest;
+    this.plaintext = plaintext;
+  }
+}
+
 const mockAuthParams = (): Authentication.Params => ({
   email: 'example@email.com',
   password: 'password',
@@ -29,13 +41,15 @@ const mockAuthParams = (): Authentication.Params => ({
 type SutType = {
   sut: AuthenticationUseCase;
   getUserByEmailRepository: GetUserByEmailRepositorySpy;
+  hashComparer: HashComparerSpy;
 };
 
 const makeSut = (): SutType => {
   const getUserByEmailRepository = new GetUserByEmailRepositorySpy();
-  const sut = new AuthenticationUseCase(getUserByEmailRepository);
+  const hashComparer = new HashComparerSpy();
+  const sut = new AuthenticationUseCase(getUserByEmailRepository, hashComparer);
 
-  return { getUserByEmailRepository, sut };
+  return { getUserByEmailRepository, hashComparer, sut };
 };
 describe('Authentication UseCase', () => {
   it('Should call GetUserByEmailRepository with correct email', async () => {
@@ -67,5 +81,15 @@ describe('Authentication UseCase', () => {
     const promise = sut.auth(authParams);
 
     expect(promise).rejects.toThrow(new AuthenticationError('email'));
+  });
+
+  it('Should call HashComparer with correct values', async () => {
+    const { sut, hashComparer, getUserByEmailRepository } = makeSut();
+    const authParams = mockAuthParams();
+
+    await sut.auth(authParams);
+
+    expect(hashComparer.plaintext).toBe(authParams.password);
+    expect(hashComparer.digest).toBe(getUserByEmailRepository.user.password);
   });
 });
