@@ -39,10 +39,14 @@ class HashComparerSpy implements HashComparer {
   }
 }
 class EncrypterSpy implements Encrypter {
+  cyphertext = 'uuid';
+
   plaintext!: string;
 
-  async encrypt(plaintext: string): Promise<void> {
+  async encrypt(plaintext: string): Promise<string> {
     this.plaintext = plaintext;
+
+    return this.cyphertext;
   }
 }
 
@@ -153,5 +157,14 @@ describe('Authentication UseCase', () => {
     const promise = sut.auth(authParams);
 
     await expect(promise).rejects.toThrow();
+  });
+
+  it('Should return an Authentication.Result', async () => {
+    const { sut, encrypter } = makeSut();
+    const authParams = mockAuthParams();
+
+    const { token } = await sut.auth(authParams);
+
+    expect(token).toBe(encrypter.cyphertext);
   });
 });

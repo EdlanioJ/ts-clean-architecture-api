@@ -4,14 +4,16 @@ import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmai
 import { AuthenticationError } from '@/domain/errors/user/authemtication';
 import { Authentication } from '@/domain/useCases/user/authentication';
 
-export class AuthenticationUseCase {
+export class AuthenticationUseCase implements Authentication {
   constructor(
     private readonly encrypter: Encrypter,
     private readonly getUserByEmailRepository: GetUserByEmailRepository,
     private readonly hashComparer: HashComparer
   ) {}
 
-  async auth(authParams: Authentication.Params): Promise<void> {
+  async auth(
+    authParams: Authentication.Params
+  ): Promise<Authentication.Result> {
     const user = await this.getUserByEmailRepository.getByEmail(
       authParams.email
     );
@@ -25,6 +27,8 @@ export class AuthenticationUseCase {
 
     if (!isValid) throw new AuthenticationError('password');
 
-    await this.encrypter.encrypt(user.id);
+    const token = await this.encrypter.encrypt(user.id);
+
+    return { token };
   }
 }
