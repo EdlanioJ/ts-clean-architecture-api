@@ -1,10 +1,10 @@
 import { UserModel } from '@/domain/models/user/user';
 
-export interface Register {
-  add: () => Promise<Register.Result>;
+export interface AddUser {
+  add: () => Promise<AddUser.Result>;
 }
 
-export namespace Register {
+export namespace AddUser {
   export type Params = Omit<
     UserModel,
     'id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'dataVersion'
