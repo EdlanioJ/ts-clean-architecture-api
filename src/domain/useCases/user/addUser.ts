@@ -1,7 +1,7 @@
 import { UserModel } from '@/domain/models/user/user';
 
 export interface AddUser {
-  add: () => Promise<AddUser.Result>;
+  add: (params: AddUser.Params) => Promise<AddUser.Result>;
 }
 
 export namespace AddUser {
