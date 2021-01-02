@@ -5,9 +5,9 @@ export interface AddUser {
 }
 
 export namespace AddUser {
-  export type Params = Omit<
+  export type Params = Pick<
     UserModel,
-    'id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'dataVersion'
+    'email' | 'name' | 'password' | 'username'
   >;
 
   export type Result = UserModel;
