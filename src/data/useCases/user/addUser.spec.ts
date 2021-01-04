@@ -60,7 +60,8 @@ class HasherSpy implements Hasher {
 class AddUserUseCase {
   constructor(
     private readonly getUserByEmailRepository: GetUserByEmailRepository,
-    private readonly getUserByUsernameRepository: GetUserByUsernameRepository
+    private readonly getUserByUsernameRepository: GetUserByUsernameRepository,
+    private readonly hasher: Hasher
   ) {}
 
   async add(params: AddUser.Params): Promise<void> {
@@ -75,22 +76,32 @@ class AddUserUseCase {
     );
 
     if (getUserByUsername) throw new Error();
+
+    await this.hasher.hash(params.password);
   }
 }
 type SutType = {
   sut: AddUserUseCase;
   getUserByEmailRepositorySpy: GetUserByEmailRepositorySpy;
   getUserByUsernameRepositorySpy: GetUserByUsernameRepositorySpy;
+  hasherSpy: HasherSpy;
 };
 const makeSut = (): SutType => {
   const getUserByEmailRepositorySpy = new GetUserByEmailRepositorySpy();
   const getUserByUsernameRepositorySpy = new GetUserByUsernameRepositorySpy();
+  const hasherSpy = new HasherSpy();
   const sut = new AddUserUseCase(
     getUserByEmailRepositorySpy,
-    getUserByUsernameRepositorySpy
+    getUserByUsernameRepositorySpy,
+    hasherSpy
   );
 
-  return { getUserByEmailRepositorySpy, getUserByUsernameRepositorySpy, sut };
+  return {
+    getUserByEmailRepositorySpy,
+    getUserByUsernameRepositorySpy,
+    hasherSpy,
+    sut,
+  };
 };
 
 const mockAddUserParams = (): AddUser.Params => ({
@@ -175,5 +186,21 @@ describe('AddUser use case', () => {
     const promise = sut.add(mockAddUserParams());
 
     await expect(promise).rejects.toThrow();
+  });
+
+  it('Should call Hasher with correct plaintext', async () => {
+    const {
+      getUserByEmailRepositorySpy,
+      getUserByUsernameRepositorySpy,
+      hasherSpy,
+      sut,
+    } = makeSut();
+    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
+    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
+
+    const addUserParams = mockAddUserParams();
+    await sut.add(addUserParams);
+
+    expect(hasherSpy.plaintext).toBe(addUserParams.password);
   });
 });
