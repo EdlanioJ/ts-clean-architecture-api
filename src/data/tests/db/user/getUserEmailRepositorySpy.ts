@@ -1,16 +1,14 @@
+import faker from 'faker';
+
 import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
 import { UserModel } from '@/data/protocols/db/user/user';
 
-export class GetUserByEmailRepositorySpy implements GetUserByEmailRepository {
-  email = 'example@example.com';
+import { mockUserModel } from './user';
 
-  user: UserModel = {
-    id: 'uuid',
-    email: 'example@example.com',
-    name: 'Example Exanple',
-    password: 'superSecretHashPassword',
-    username: 'example',
-  };
+export class GetUserByEmailRepositorySpy implements GetUserByEmailRepository {
+  email = faker.internet.email();
+
+  user = mockUserModel();
 
   async getByEmail(email: string): Promise<UserModel | undefined> {
     this.email = email;
