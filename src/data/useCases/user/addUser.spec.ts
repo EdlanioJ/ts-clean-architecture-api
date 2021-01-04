@@ -39,6 +39,7 @@ class GetUserByUsernameRepositorySpy implements GetUserByUsernameRepository {
       .mockResolvedValueOnce(undefined);
   }
 
+  // This is not the best way to mock this *CHANGE IT*
   simulateGetByUsername(username: string): void {
     this.username = username;
 
