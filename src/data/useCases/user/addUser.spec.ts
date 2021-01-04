@@ -22,7 +22,11 @@ class AddUserUseCase {
   ) {}
 
   async add(params: AddUser.Params): Promise<void> {
-    await this.getUserByEmailRepository.getByEmail(params.email);
+    const getUserByEmail = await this.getUserByEmailRepository.getByEmail(
+      params.email
+    );
+
+    if (getUserByEmail) throw new Error();
   }
 }
 type SutType = {
@@ -46,6 +50,7 @@ describe('AddUser use case', () => {
   it('Should call GetUserByEmailRepository with correct email', async () => {
     const { sut, getUserByEmailRepositorySpy } = makeSut();
     const addUserParams = mockAddUserParams();
+    getUserByEmailRepositorySpy.simulateGetByEmail(addUserParams.email);
 
     await sut.add(addUserParams);
 
@@ -58,5 +63,13 @@ describe('AddUser use case', () => {
     const promise = sut.add(mockAddUserParams());
 
     await expect(promise).rejects.toThrowError();
+  });
+
+  it('Should throw if GetUserByEmailRepository.getByEmail returns a User', async () => {
+    const { getUserByEmailRepositorySpy, sut } = makeSut();
+
+    const promise = sut.add(mockAddUserParams());
+
+    await expect(promise).rejects.toThrow();
   });
 });
