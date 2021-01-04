@@ -35,11 +35,7 @@ describe('Authentication UseCase', () => {
 
   it('Should throw if GetUserByEmailRepository throws', () => {
     const { getUserByEmailRepositorySpy, sut } = makeSut();
-    jest
-      .spyOn(getUserByEmailRepositorySpy, 'getByEmail')
-      .mockImplementationOnce(() => {
-        throw new Error();
-      });
+    getUserByEmailRepositorySpy.simulateGetByEmailThrowError();
     const promise = sut.auth(mockAuthParams());
 
     expect(promise).rejects.toThrowError();
@@ -47,9 +43,7 @@ describe('Authentication UseCase', () => {
 
   it('Should throw if GetUserByEmailRepository returns undefined', async () => {
     const { getUserByEmailRepositorySpy, sut } = makeSut();
-    jest
-      .spyOn(getUserByEmailRepositorySpy, 'getByEmail')
-      .mockResolvedValueOnce(undefined);
+    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
 
     const authParams = mockAuthParams();
     const promise = sut.auth(authParams);
@@ -71,9 +65,7 @@ describe('Authentication UseCase', () => {
 
   it('Should throws if HashComparer throws', () => {
     const { sut, hashComparerSpy } = makeSut();
-    jest.spyOn(hashComparerSpy, 'compare').mockImplementationOnce(() => {
-      throw new Error();
-    });
+    hashComparerSpy.simulateCompareThrowError();
     const authParams = mockAuthParams();
 
     const promise = sut.auth(authParams);
@@ -83,7 +75,7 @@ describe('Authentication UseCase', () => {
 
   it('Should throws if HashComparer returns false', async () => {
     const { sut, hashComparerSpy, getUserByEmailRepositorySpy } = makeSut();
-    jest.spyOn(hashComparerSpy, 'compare').mockResolvedValueOnce(false);
+    hashComparerSpy.simulateCompareReturnsFalse();
 
     const authParams = mockAuthParams();
 
@@ -103,9 +95,7 @@ describe('Authentication UseCase', () => {
 
   it('Should throw if Encrypter throws', async () => {
     const { encrypterSpy, sut } = makeSut();
-    jest.spyOn(encrypterSpy, 'encrypt').mockImplementationOnce(() => {
-      throw new Error();
-    });
+    encrypterSpy.simulateEncryptThrowError();
     const authParams = mockAuthParams();
 
     const promise = sut.auth(authParams);

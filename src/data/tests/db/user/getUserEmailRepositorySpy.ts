@@ -17,4 +17,18 @@ export class GetUserByEmailRepositorySpy implements GetUserByEmailRepository {
 
     return this.user;
   }
+
+  simulateGetByEmailThrowError(): void {
+    jest
+      .spyOn(GetUserByEmailRepositorySpy.prototype, 'getByEmail')
+      .mockImplementationOnce(() => {
+        throw new Error();
+      });
+  }
+
+  simulateGetByEmailReturnsUndefined(): void {
+    jest
+      .spyOn(GetUserByEmailRepositorySpy.prototype, 'getByEmail')
+      .mockResolvedValueOnce(undefined);
+  }
 }

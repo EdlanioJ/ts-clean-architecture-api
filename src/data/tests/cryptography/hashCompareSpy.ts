@@ -13,4 +13,18 @@ export class HashComparerSpy implements HashComparer {
 
     return this.isValid;
   }
+
+  simulateCompareThrowError(): void {
+    jest
+      .spyOn(HashComparerSpy.prototype, 'compare')
+      .mockImplementationOnce(() => {
+        throw new Error();
+      });
+  }
+
+  simulateCompareReturnsFalse(): void {
+    jest
+      .spyOn(HashComparerSpy.prototype, 'compare')
+      .mockResolvedValueOnce(false);
+  }
 }

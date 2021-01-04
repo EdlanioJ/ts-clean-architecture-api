@@ -10,4 +10,10 @@ export class EncrypterSpy implements Encrypter {
 
     return this.cyphertext;
   }
+
+  simulateEncryptThrowError(): void {
+    jest.spyOn(EncrypterSpy.prototype, 'encrypt').mockImplementationOnce(() => {
+      throw new Error();
+    });
+  }
 }
