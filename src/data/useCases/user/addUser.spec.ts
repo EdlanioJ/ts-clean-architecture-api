@@ -7,7 +7,7 @@ import { mockUserModel } from '@/data/tests/db/user/user';
 import { AddUser } from '@/domain/useCases/user/addUser';
 
 interface Hasher {
-  hash: (plaintext: string) => Promise<void>;
+  hash: (plaintext: string) => Promise<string>;
 }
 
 interface GetUserByUsernameRepository {
@@ -50,10 +50,19 @@ class GetUserByUsernameRepositorySpy implements GetUserByUsernameRepository {
 }
 
 class HasherSpy implements Hasher {
-  plaintext = '';
+  plaintext = faker.internet.password();
 
-  async hash(plaintext: string): Promise<void> {
+  digest = faker.random.uuid();
+
+  async hash(plaintext: string): Promise<string> {
     this.plaintext = plaintext;
+    return this.digest;
+  }
+
+  simulateHashThrowError(): void {
+    jest.spyOn(HasherSpy.prototype, 'hash').mockImplementationOnce(() => {
+      throw new Error();
+    });
   }
 }
 
@@ -202,5 +211,21 @@ describe('AddUser use case', () => {
     await sut.add(addUserParams);
 
     expect(hasherSpy.plaintext).toBe(addUserParams.password);
+  });
+
+  it('Should throws if Hasher.hash throws', async () => {
+    const {
+      getUserByEmailRepositorySpy,
+      getUserByUsernameRepositorySpy,
+      hasherSpy,
+      sut,
+    } = makeSut();
+    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
+    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
+    hasherSpy.simulateHashThrowError();
+
+    const promise = sut.add(mockAddUserParams());
+
+    await expect(promise).rejects.toThrow();
   });
 });
