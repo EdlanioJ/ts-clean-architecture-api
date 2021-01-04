@@ -18,6 +18,14 @@ class GetUserByUsernameRepositorySpy implements GetUserByUsernameRepository {
   async getByUsername(username: string): Promise<void> {
     this.username = username;
   }
+
+  simulateGetByUsernameThrowError(): void {
+    jest
+      .spyOn(GetUserByUsernameRepositorySpy.prototype, 'getByUsername')
+      .mockImplementationOnce(() => {
+        throw new Error();
+      });
+  }
 }
 
 class HasherSpy implements Hasher {
@@ -107,5 +115,19 @@ describe('AddUser use case', () => {
     expect(getUserByUsernameRepositorySpy.username).toBe(
       addUserParams.username
     );
+  });
+
+  it('Should throws if GetUserByUsernameRepository.getByUsername throws', async () => {
+    const {
+      getUserByUsernameRepositorySpy,
+      getUserByEmailRepositorySpy,
+      sut,
+    } = makeSut();
+    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
+    getUserByUsernameRepositorySpy.simulateGetByUsernameThrowError();
+
+    const promise = sut.add(mockAddUserParams());
+
+    await expect(promise).rejects.toThrow();
   });
 });
