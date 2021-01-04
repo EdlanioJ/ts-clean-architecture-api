@@ -51,4 +51,12 @@ describe('AddUser use case', () => {
 
     expect(getUserByEmailRepositorySpy.email).toBe(addUserParams.email);
   });
+
+  it('Should throws if getUserByEmailRepository.getByEmail throws', async () => {
+    const { getUserByEmailRepositorySpy, sut } = makeSut();
+    getUserByEmailRepositorySpy.simulateGetByEmailThrowError();
+    const promise = sut.add(mockAddUserParams());
+
+    await expect(promise).rejects.toThrowError();
+  });
 });
