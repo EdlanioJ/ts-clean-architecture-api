@@ -1,7 +1,9 @@
 import faker from 'faker';
 
 import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
+import { UserModel } from '@/data/protocols/db/user/user';
 import { GetUserByEmailRepositorySpy } from '@/data/tests/db/user/getUserEmailRepositorySpy';
+import { mockUserModel } from '@/data/tests/db/user/user';
 import { AddUser } from '@/domain/useCases/user/addUser';
 
 interface Hasher {
@@ -9,14 +11,18 @@ interface Hasher {
 }
 
 interface GetUserByUsernameRepository {
-  getByUsername: (username: string) => Promise<void>;
+  getByUsername: (username: string) => Promise<UserModel | undefined>;
 }
 
 class GetUserByUsernameRepositorySpy implements GetUserByUsernameRepository {
   username = faker.internet.userName();
 
-  async getByUsername(username: string): Promise<void> {
+  user = mockUserModel();
+
+  async getByUsername(username: string): Promise<UserModel | undefined> {
     this.username = username;
+
+    return this.user;
   }
 
   simulateGetByUsernameThrowError(): void {
@@ -25,6 +31,20 @@ class GetUserByUsernameRepositorySpy implements GetUserByUsernameRepository {
       .mockImplementationOnce(() => {
         throw new Error();
       });
+  }
+
+  simulateGetByUsernameReturnsUndefined(): void {
+    jest
+      .spyOn(GetUserByUsernameRepositorySpy.prototype, 'getByUsername')
+      .mockResolvedValueOnce(undefined);
+  }
+
+  simulateGetByUsername(username: string): void {
+    this.username = username;
+
+    jest
+      .spyOn(GetUserByUsernameRepositorySpy.prototype, 'getByUsername')
+      .mockResolvedValueOnce(undefined);
   }
 }
 
@@ -49,7 +69,11 @@ class AddUserUseCase {
 
     if (getUserByEmail) throw new Error();
 
-    await this.getUserByUsernameRepository.getByUsername(params.username);
+    const getUserByUsername = await this.getUserByUsernameRepository.getByUsername(
+      params.username
+    );
+
+    if (getUserByUsername) throw new Error();
   }
 }
 type SutType = {
@@ -76,9 +100,14 @@ const mockAddUserParams = (): AddUser.Params => ({
 });
 describe('AddUser use case', () => {
   it('Should call GetUserByEmailRepository with correct email', async () => {
-    const { sut, getUserByEmailRepositorySpy } = makeSut();
+    const {
+      sut,
+      getUserByEmailRepositorySpy,
+      getUserByUsernameRepositorySpy,
+    } = makeSut();
     const addUserParams = mockAddUserParams();
     getUserByEmailRepositorySpy.simulateGetByEmail(addUserParams.email);
+    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
 
     await sut.add(addUserParams);
 
@@ -109,6 +138,9 @@ describe('AddUser use case', () => {
     } = makeSut();
     getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
     const addUserParams = mockAddUserParams();
+    getUserByUsernameRepositorySpy.simulateGetByUsername(
+      addUserParams.username
+    );
 
     await sut.add(addUserParams);
 
@@ -125,6 +157,19 @@ describe('AddUser use case', () => {
     } = makeSut();
     getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
     getUserByUsernameRepositorySpy.simulateGetByUsernameThrowError();
+
+    const promise = sut.add(mockAddUserParams());
+
+    await expect(promise).rejects.toThrow();
+  });
+
+  it('Should throw if GetUserByUsernameRepository.getByEmail returns a User', async () => {
+    const {
+      getUserByUsernameRepositorySpy,
+      getUserByEmailRepositorySpy,
+      sut,
+    } = makeSut();
+    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
 
     const promise = sut.add(mockAddUserParams());
 
