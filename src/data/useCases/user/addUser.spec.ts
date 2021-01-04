@@ -8,6 +8,18 @@ interface Hasher {
   hash: (plaintext: string) => Promise<void>;
 }
 
+interface GetUserByUsernameRepository {
+  getByUsername: (username: string) => Promise<void>;
+}
+
+class GetUserByUsernameRepositorySpy implements GetUserByUsernameRepository {
+  username = faker.internet.userName();
+
+  async getByUsername(username: string): Promise<void> {
+    this.username = username;
+  }
+}
+
 class HasherSpy implements Hasher {
   plaintext = '';
 
@@ -18,7 +30,8 @@ class HasherSpy implements Hasher {
 
 class AddUserUseCase {
   constructor(
-    private readonly getUserByEmailRepository: GetUserByEmailRepository
+    private readonly getUserByEmailRepository: GetUserByEmailRepository,
+    private readonly getUserByUsernameRepository: GetUserByUsernameRepository
   ) {}
 
   async add(params: AddUser.Params): Promise<void> {
@@ -27,17 +40,24 @@ class AddUserUseCase {
     );
 
     if (getUserByEmail) throw new Error();
+
+    await this.getUserByUsernameRepository.getByUsername(params.username);
   }
 }
 type SutType = {
   sut: AddUserUseCase;
   getUserByEmailRepositorySpy: GetUserByEmailRepositorySpy;
+  getUserByUsernameRepositorySpy: GetUserByUsernameRepositorySpy;
 };
 const makeSut = (): SutType => {
   const getUserByEmailRepositorySpy = new GetUserByEmailRepositorySpy();
-  const sut = new AddUserUseCase(getUserByEmailRepositorySpy);
+  const getUserByUsernameRepositorySpy = new GetUserByUsernameRepositorySpy();
+  const sut = new AddUserUseCase(
+    getUserByEmailRepositorySpy,
+    getUserByUsernameRepositorySpy
+  );
 
-  return { getUserByEmailRepositorySpy, sut };
+  return { getUserByEmailRepositorySpy, getUserByUsernameRepositorySpy, sut };
 };
 
 const mockAddUserParams = (): AddUser.Params => ({
@@ -71,5 +91,21 @@ describe('AddUser use case', () => {
     const promise = sut.add(mockAddUserParams());
 
     await expect(promise).rejects.toThrow();
+  });
+
+  it('Should call GetUserByUsernameRepository with correct username', async () => {
+    const {
+      getUserByUsernameRepositorySpy,
+      getUserByEmailRepositorySpy,
+      sut,
+    } = makeSut();
+    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
+    const addUserParams = mockAddUserParams();
+
+    await sut.add(addUserParams);
+
+    expect(getUserByUsernameRepositorySpy.username).toBe(
+      addUserParams.username
+    );
   });
 });
