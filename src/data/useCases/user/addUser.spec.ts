@@ -14,6 +14,25 @@ interface GetUserByUsernameRepository {
   getByUsername: (username: string) => Promise<UserModel | undefined>;
 }
 
+interface UuidProvider {
+  uuidv4: () => string;
+}
+
+class UuidProviderSpy implements UuidProvider {
+  id = faker.random.uuid();
+
+  uuidv4(): string {
+    return this.id;
+  }
+
+  simulateUuidv4ThrowError(): void {
+    jest
+      .spyOn(UuidProviderSpy.prototype, 'uuidv4')
+      .mockImplementationOnce(() => {
+        throw new Error();
+      });
+  }
+}
 class GetUserByUsernameRepositorySpy implements GetUserByUsernameRepository {
   username = faker.internet.userName();
 
@@ -70,7 +89,8 @@ class AddUserUseCase {
   constructor(
     private readonly getUserByEmailRepository: GetUserByEmailRepository,
     private readonly getUserByUsernameRepository: GetUserByUsernameRepository,
-    private readonly hasher: Hasher
+    private readonly hasher: Hasher,
+    private readonly uuidProvider: UuidProvider
   ) {}
 
   async add(params: AddUser.Params): Promise<void> {
@@ -86,7 +106,9 @@ class AddUserUseCase {
 
     if (getUserByUsername) throw new Error();
 
-    await this.hasher.hash(params.password);
+    const id = this.uuidProvider.uuidv4();
+
+    const passwordHash = await this.hasher.hash(params.password);
   }
 }
 type SutType = {
@@ -94,15 +116,18 @@ type SutType = {
   getUserByEmailRepositorySpy: GetUserByEmailRepositorySpy;
   getUserByUsernameRepositorySpy: GetUserByUsernameRepositorySpy;
   hasherSpy: HasherSpy;
+  uuidProviderSpy: UuidProviderSpy;
 };
 const makeSut = (): SutType => {
   const getUserByEmailRepositorySpy = new GetUserByEmailRepositorySpy();
   const getUserByUsernameRepositorySpy = new GetUserByUsernameRepositorySpy();
   const hasherSpy = new HasherSpy();
+  const uuidProviderSpy = new UuidProviderSpy();
   const sut = new AddUserUseCase(
     getUserByEmailRepositorySpy,
     getUserByUsernameRepositorySpy,
-    hasherSpy
+    hasherSpy,
+    uuidProviderSpy
   );
 
   return {
@@ -110,6 +135,7 @@ const makeSut = (): SutType => {
     getUserByUsernameRepositorySpy,
     hasherSpy,
     sut,
+    uuidProviderSpy,
   };
 };
 
@@ -227,5 +253,21 @@ describe('AddUser use case', () => {
     const promise = sut.add(mockAddUserParams());
 
     await expect(promise).rejects.toThrow();
+  });
+
+  it('Should throws if UuidProvider.uuidv4 throws', async () => {
+    const {
+      getUserByUsernameRepositorySpy,
+      getUserByEmailRepositorySpy,
+      sut,
+      uuidProviderSpy,
+    } = makeSut();
+    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
+    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
+    uuidProviderSpy.simulateUuidv4ThrowError();
+
+    const promise = sut.add(mockAddUserParams());
+
+    await expect(promise).rejects.toThrowError();
   });
 });
