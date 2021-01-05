@@ -99,7 +99,7 @@ class AddUserRepositorySpy implements AddUserRepository {
   user = mockUserModel();
 
   async save(params: AddUserRepositoryParams): Promise<void> {
-    this.user = Object.assign(this.user, params);
+    Object.assign(this.user, params);
   }
 
   simulateSaveThrowError(): void {
