@@ -18,6 +18,16 @@ interface UuidProvider {
   uuidv4: () => string;
 }
 
+interface AddUserRepositoryParams {
+  id: string;
+  email: string;
+  name: string;
+  password: string;
+  username: string;
+}
+interface AddUserRepository {
+  save: (params: AddUserRepositoryParams) => Promise<void>;
+}
 class UuidProviderSpy implements UuidProvider {
   id = faker.random.uuid();
 
@@ -85,12 +95,20 @@ class HasherSpy implements Hasher {
   }
 }
 
+class AddUserRepositorySpy implements AddUserRepository {
+  user = mockUserModel();
+
+  async save(params: AddUserRepositoryParams): Promise<void> {
+    this.user = Object.assign(this.user, params);
+  }
+}
 class AddUserUseCase {
   constructor(
     private readonly getUserByEmailRepository: GetUserByEmailRepository,
     private readonly getUserByUsernameRepository: GetUserByUsernameRepository,
     private readonly hasher: Hasher,
-    private readonly uuidProvider: UuidProvider
+    private readonly uuidProvider: UuidProvider,
+    private readonly addUserRepository: AddUserRepository
   ) {}
 
   async add(params: AddUser.Params): Promise<void> {
@@ -109,6 +127,12 @@ class AddUserUseCase {
     const id = this.uuidProvider.uuidv4();
 
     const passwordHash = await this.hasher.hash(params.password);
+
+    await this.addUserRepository.save({
+      ...params,
+      id,
+      password: passwordHash,
+    });
   }
 }
 type SutType = {
@@ -117,20 +141,24 @@ type SutType = {
   getUserByUsernameRepositorySpy: GetUserByUsernameRepositorySpy;
   hasherSpy: HasherSpy;
   uuidProviderSpy: UuidProviderSpy;
+  addUserRepositorySpy: AddUserRepositorySpy;
 };
 const makeSut = (): SutType => {
   const getUserByEmailRepositorySpy = new GetUserByEmailRepositorySpy();
   const getUserByUsernameRepositorySpy = new GetUserByUsernameRepositorySpy();
   const hasherSpy = new HasherSpy();
   const uuidProviderSpy = new UuidProviderSpy();
+  const addUserRepositorySpy = new AddUserRepositorySpy();
   const sut = new AddUserUseCase(
     getUserByEmailRepositorySpy,
     getUserByUsernameRepositorySpy,
     hasherSpy,
-    uuidProviderSpy
+    uuidProviderSpy,
+    addUserRepositorySpy
   );
 
   return {
+    addUserRepositorySpy,
     getUserByEmailRepositorySpy,
     getUserByUsernameRepositorySpy,
     hasherSpy,
@@ -145,6 +173,7 @@ const mockAddUserParams = (): AddUser.Params => ({
   password: faker.random.alphaNumeric(8),
   username: faker.internet.userName(),
 });
+
 describe('AddUser use case', () => {
   it('Should call GetUserByEmailRepository with correct email', async () => {
     const {
@@ -269,5 +298,28 @@ describe('AddUser use case', () => {
     const promise = sut.add(mockAddUserParams());
 
     await expect(promise).rejects.toThrowError();
+  });
+
+  it('Should call AddUserRepository.save with correct params', async () => {
+    const {
+      getUserByUsernameRepositorySpy,
+      getUserByEmailRepositorySpy,
+      sut,
+      addUserRepositorySpy,
+    } = makeSut();
+    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
+    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
+
+    const addUserParams = mockAddUserParams();
+
+    await sut.add(addUserParams);
+
+    expect(addUserRepositorySpy.user).toEqual(
+      expect.objectContaining({
+        name: addUserParams.name,
+        email: addUserParams.email,
+        username: addUserParams.username,
+      })
+    );
   });
 });
