@@ -10,5 +10,8 @@ export namespace AddUser {
     'email' | 'name' | 'password' | 'username'
   >;
 
-  export type Result = UserModel;
+  export type Result = Omit<
+    UserModel,
+    'createdAt' | 'updatedAt' | 'deletedAt' | 'dataVersion'
+  >;
 }
