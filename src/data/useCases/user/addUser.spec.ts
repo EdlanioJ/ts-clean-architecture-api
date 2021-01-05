@@ -101,6 +101,14 @@ class AddUserRepositorySpy implements AddUserRepository {
   async save(params: AddUserRepositoryParams): Promise<void> {
     this.user = Object.assign(this.user, params);
   }
+
+  simulateSaveThrowError(): void {
+    jest
+      .spyOn(AddUserRepositorySpy.prototype, 'save')
+      .mockImplementationOnce(() => {
+        throw new Error();
+      });
+  }
 }
 class AddUserUseCase {
   constructor(
@@ -321,5 +329,21 @@ describe('AddUser use case', () => {
         username: addUserParams.username,
       })
     );
+  });
+
+  it('Should throws if AddUserRepository.save throws', async () => {
+    const {
+      getUserByUsernameRepositorySpy,
+      getUserByEmailRepositorySpy,
+      sut,
+      addUserRepositorySpy,
+    } = makeSut();
+    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
+    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
+    addUserRepositorySpy.simulateSaveThrowError();
+
+    const promise = sut.add(mockAddUserParams());
+
+    await expect(promise).rejects.toThrowError();
   });
 });
