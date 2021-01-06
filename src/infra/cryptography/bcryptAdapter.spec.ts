@@ -6,6 +6,9 @@ jest.mock('bcryptjs', () => ({
   async hash(): Promise<string> {
     return 'hash';
   },
+  async compare(): Promise<boolean> {
+    return false;
+  },
 }));
 class BcryptAdapter implements Hasher {
   constructor(private readonly salt: number) {}
@@ -14,6 +17,10 @@ class BcryptAdapter implements Hasher {
     const digest = await bcrypt.hash(plaintext, this.salt);
 
     return digest;
+  }
+
+  async compare(plaintext: string, digest: string): Promise<void> {
+    bcrypt.compare(plaintext, digest);
   }
 }
 const salt = 12;
@@ -46,6 +53,16 @@ describe('Bcrypt Adapter', () => {
       const promise = sut.hash('any_value');
 
       await expect(promise).rejects.toThrow();
+    });
+  });
+
+  describe('compare', () => {
+    it('Should call compare with correct values', async () => {
+      const sut = makeSut();
+      const compareSpy = jest.spyOn(bcrypt, 'compare');
+      await sut.compare('any_value', 'any_hash');
+
+      expect(compareSpy).toHaveBeenCalledWith('any_value', 'any_hash');
     });
   });
 });
