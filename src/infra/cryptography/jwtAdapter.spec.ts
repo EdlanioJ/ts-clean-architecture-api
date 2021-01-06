@@ -1,10 +1,19 @@
 import jwt from 'jsonwebtoken';
 
-class JwtAdapter {
+import { Encrypter } from '@/data/protocols/cryptography/encrypter';
+
+jest.mock('jsonwebtoken', () => ({
+  async sign(): Promise<string> {
+    return 'any_token';
+  },
+}));
+class JwtAdapter implements Encrypter {
   constructor(private readonly secret: string) {}
 
-  async encrypt(plaintext: string) {
-    await jwt.sign({ id: plaintext }, this.secret);
+  async encrypt(plaintext: string): Promise<string> {
+    const cyphertext = await jwt.sign({ id: plaintext }, this.secret);
+
+    return cyphertext;
   }
 }
 
@@ -19,6 +28,12 @@ describe('jwt Adaper', () => {
       await sut.encrypt('any_id');
 
       expect(signSpy).toHaveBeenCalledWith({ id: 'any_id' }, 'secret');
+    });
+
+    it('Should return a token on sign success', async () => {
+      const sut = makeSut();
+      const accessToken = await sut.encrypt('any_id');
+      expect(accessToken).toBe('any_token');
     });
   });
 });
