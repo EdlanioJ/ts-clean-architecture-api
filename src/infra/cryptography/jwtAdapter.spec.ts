@@ -1,10 +1,13 @@
-import jwt from 'jsonwebtoken';
+import jwt, { verify } from 'jsonwebtoken';
 
 import { Encrypter } from '@/data/protocols/cryptography/encrypter';
 
 jest.mock('jsonwebtoken', () => ({
   async sign(): Promise<string> {
     return 'any_token';
+  },
+  async verify(): Promise<string> {
+    return 'any_value';
   },
 }));
 class JwtAdapter implements Encrypter {
@@ -14,6 +17,10 @@ class JwtAdapter implements Encrypter {
     const cyphertext = await jwt.sign({ id: plaintext }, this.secret);
 
     return cyphertext;
+  }
+
+  async decrypt(ciphertext: string): Promise<void> {
+    await jwt.verify(ciphertext, this.secret);
   }
 }
 
@@ -33,6 +40,7 @@ describe('jwt Adaper', () => {
     it('Should return a token on sign success', async () => {
       const sut = makeSut();
       const accessToken = await sut.encrypt('any_id');
+
       expect(accessToken).toBe('any_token');
     });
 
@@ -42,7 +50,18 @@ describe('jwt Adaper', () => {
         throw new Error();
       });
       const promise = sut.encrypt('any_id');
+
       await expect(promise).rejects.toThrow();
+    });
+  });
+
+  describe('verify', () => {
+    it('Should call verify with correct values', async () => {
+      const sut = makeSut();
+      const verifySpy = jest.spyOn(jwt, 'verify');
+      await sut.decrypt('any_token');
+
+      expect(verifySpy).toHaveBeenCalledWith('any_token', 'secret');
     });
   });
 });
