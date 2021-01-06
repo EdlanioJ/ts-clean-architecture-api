@@ -5,10 +5,10 @@ import { GetUserByUsernameRepositorySpy } from '@/data/tests/db/user/getUserByUs
 import { GetUserByEmailRepositorySpy } from '@/data/tests/db/user/getUserEmailRepositorySpy';
 import { mockAddUserParams } from '@/data/tests/db/user/mockAddUserParams';
 
-import { AddUserUseCase } from './addUser';
+import { AddUserService } from './addUser';
 
 type SutType = {
-  sut: AddUserUseCase;
+  sut: AddUserService;
   getUserByEmailRepositorySpy: GetUserByEmailRepositorySpy;
   getUserByUsernameRepositorySpy: GetUserByUsernameRepositorySpy;
   hasherSpy: HasherSpy;
@@ -21,7 +21,7 @@ const makeSut = (): SutType => {
   const hasherSpy = new HasherSpy();
   const uuidProviderSpy = new UuidProviderSpy();
   const addUserRepositorySpy = new AddUserRepositorySpy();
-  const sut = new AddUserUseCase(
+  const sut = new AddUserService(
     getUserByEmailRepositorySpy,
     getUserByUsernameRepositorySpy,
     hasherSpy,

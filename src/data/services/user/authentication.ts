@@ -4,7 +4,7 @@ import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmai
 import { AuthenticationError } from '@/domain/errors/user/authemtication';
 import { Authentication } from '@/domain/useCases/user/authentication';
 
-export class AuthenticationUseCase implements Authentication {
+export class AuthenticationService implements Authentication {
   constructor(
     private readonly encrypter: Encrypter,
     private readonly getUserByEmailRepository: GetUserByEmailRepository,

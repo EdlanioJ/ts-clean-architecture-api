@@ -5,7 +5,7 @@ import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmai
 import { GetUserByUsernameRepository } from '@/data/protocols/db/user/getUserByUsernameRepository';
 import { AddUser } from '@/domain/useCases/user/addUser';
 
-export class AddUserUseCase implements AddUser {
+export class AddUserService implements AddUser {
   constructor(
     private readonly getUserByEmailRepository: GetUserByEmailRepository,
     private readonly getUserByUsernameRepository: GetUserByUsernameRepository,

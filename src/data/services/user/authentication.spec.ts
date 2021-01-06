@@ -4,10 +4,10 @@ import { GetUserByEmailRepositorySpy } from '@/data/tests/db/user/getUserEmailRe
 import { mockAuthParams } from '@/data/tests/db/user/mockAuthParams';
 import { AuthenticationError } from '@/domain/errors/user/authemtication';
 
-import { AuthenticationUseCase } from './authentication';
+import { AuthenticationService } from './authentication';
 
 type SutType = {
-  sut: AuthenticationUseCase;
+  sut: AuthenticationService;
   getUserByEmailRepositorySpy: GetUserByEmailRepositorySpy;
   hashComparerSpy: HashComparerSpy;
   encrypterSpy: EncrypterSpy;
@@ -17,7 +17,7 @@ const makeSut = (): SutType => {
   const getUserByEmailRepositorySpy = new GetUserByEmailRepositorySpy();
   const hashComparerSpy = new HashComparerSpy();
   const encrypterSpy = new EncrypterSpy();
-  const sut = new AuthenticationUseCase(
+  const sut = new AuthenticationService(
     encrypterSpy,
     getUserByEmailRepositorySpy,
     hashComparerSpy
