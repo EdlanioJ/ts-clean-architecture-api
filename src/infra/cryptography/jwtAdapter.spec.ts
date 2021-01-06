@@ -20,8 +20,8 @@ class JwtAdapter implements Encrypter, Decrypter {
     return cyphertext;
   }
 
-  async decrypt(ciphertext: string): Promise<string> {
-    const plaintext = (await jwt.verify(ciphertext, this.secret)) as string;
+  async decrypt(ciphertext: string): Promise<string | object> {
+    const plaintext = await jwt.verify(ciphertext, this.secret);
 
     return plaintext;
   }
