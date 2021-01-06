@@ -1,7 +1,6 @@
 import bcrypt from 'bcryptjs';
 
-import { HashComparer } from '@/data/protocols/cryptography/hashComparer';
-import { Hasher } from '@/data/protocols/cryptography/hasher';
+import { BcryptAdapter } from './bcryptAdapter';
 
 jest.mock('bcryptjs', () => ({
   async hash(): Promise<string> {
@@ -11,21 +10,7 @@ jest.mock('bcryptjs', () => ({
     return false;
   },
 }));
-class BcryptAdapter implements Hasher, HashComparer {
-  constructor(private readonly salt: number) {}
 
-  async hash(plaintext: string): Promise<string> {
-    const digest = await bcrypt.hash(plaintext, this.salt);
-
-    return digest;
-  }
-
-  async compare(plaintext: string, digest: string): Promise<boolean> {
-    const isValid = bcrypt.compare(plaintext, digest);
-
-    return isValid;
-  }
-}
 const salt = 12;
 
 const makeSut = (): BcryptAdapter => {
