@@ -1,5 +1,6 @@
 import jwt, { verify } from 'jsonwebtoken';
 
+import { Decrypter } from '@/data/protocols/cryptography/decrypter';
 import { Encrypter } from '@/data/protocols/cryptography/encrypter';
 
 jest.mock('jsonwebtoken', () => ({
@@ -10,7 +11,7 @@ jest.mock('jsonwebtoken', () => ({
     return 'any_value';
   },
 }));
-class JwtAdapter implements Encrypter {
+class JwtAdapter implements Encrypter, Decrypter {
   constructor(private readonly secret: string) {}
 
   async encrypt(plaintext: string): Promise<string> {
@@ -19,8 +20,10 @@ class JwtAdapter implements Encrypter {
     return cyphertext;
   }
 
-  async decrypt(ciphertext: string): Promise<void> {
-    await jwt.verify(ciphertext, this.secret);
+  async decrypt(ciphertext: string): Promise<string> {
+    const plaintext = (await jwt.verify(ciphertext, this.secret)) as string;
+
+    return plaintext;
   }
 }
 
@@ -62,6 +65,13 @@ describe('jwt Adaper', () => {
       await sut.decrypt('any_token');
 
       expect(verifySpy).toHaveBeenCalledWith('any_token', 'secret');
+    });
+
+    it('Should return a value on verify success', async () => {
+      const sut = makeSut();
+      const value = await sut.decrypt('any_token');
+
+      expect(value).toBe('any_value');
     });
   });
 });
