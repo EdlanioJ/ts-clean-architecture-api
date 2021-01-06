@@ -1,7 +1,6 @@
 import jwt, { verify } from 'jsonwebtoken';
 
-import { Decrypter } from '@/data/protocols/cryptography/decrypter';
-import { Encrypter } from '@/data/protocols/cryptography/encrypter';
+import { JwtAdapter } from './jwtAdapter';
 
 jest.mock('jsonwebtoken', () => ({
   async sign(): Promise<string> {
@@ -11,21 +10,6 @@ jest.mock('jsonwebtoken', () => ({
     return 'any_value';
   },
 }));
-class JwtAdapter implements Encrypter, Decrypter {
-  constructor(private readonly secret: string) {}
-
-  async encrypt(plaintext: string): Promise<string> {
-    const cyphertext = await jwt.sign({ id: plaintext }, this.secret);
-
-    return cyphertext;
-  }
-
-  async decrypt(ciphertext: string): Promise<string | object> {
-    const plaintext = await jwt.verify(ciphertext, this.secret);
-
-    return plaintext;
-  }
-}
 
 const makeSut = (): JwtAdapter => {
   return new JwtAdapter('secret');
