@@ -224,5 +224,18 @@ describe('UserPrismaRepository', () => {
         expect.objectContaining({ username })
       );
     });
+
+    it('Should throws if findUnique throws an Error', async () => {
+      const sut = makeSut();
+      jest.spyOn(prismaUserSpy, 'findUnique').mockImplementationOnce(() => {
+        throw new Error();
+      });
+
+      const username = faker.internet.userName();
+
+      const promise = sut.getByUsername(username);
+
+      await expect(promise).rejects.toThrowError();
+    });
   });
 });
