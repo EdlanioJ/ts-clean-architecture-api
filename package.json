@@ -42,11 +42,6 @@
     "ts-jest": "^26.4.4",
     "typescript": "^4.1.3"
   },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
-  },
   "dependencies": {
     "@prisma/client": "^2.14.0",
     "bcryptjs": "^2.4.3",
