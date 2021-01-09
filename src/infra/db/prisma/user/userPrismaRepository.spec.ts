@@ -37,8 +37,10 @@ class PrismaUserSpy {
     };
   }
 
-  async findUnique(value: Prisma.FindUniqueuserArgs): Promise<void> {
+  async findUnique(value: Prisma.FindUniqueuserArgs): Promise<null> {
     this.findValue = value.where;
+
+    return null;
   }
 }
 
@@ -79,7 +81,7 @@ class UserPrismaRepository implements AddUserRepository {
   }
 
   async getByEmail(email: string): Promise<void> {
-    await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: {
         email,
       },
@@ -142,6 +144,18 @@ describe('UserPrismaRepository', () => {
       expect(prismaUserSpy.findValue).toEqual(
         expect.objectContaining({ email })
       );
+    });
+
+    it('Should throw if findUnique throws an Error', async () => {
+      const sut = makeSut();
+      const email = faker.internet.email();
+      jest.spyOn(prismaUserSpy, 'findUnique').mockImplementationOnce(() => {
+        throw new Error();
+      });
+
+      const promise = sut.getByEmail(email);
+
+      await expect(promise).rejects.toThrowError();
     });
   });
 });
