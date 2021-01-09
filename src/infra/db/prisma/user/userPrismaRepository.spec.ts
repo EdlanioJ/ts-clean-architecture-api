@@ -1,29 +1,31 @@
+/* eslint-disable consistent-return */
 import faker from 'faker';
 
 import {
   AddUserRepository,
   AddUserRepositoryParams,
 } from '@/data/protocols/db/user/addUserRepository';
+import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
 import { UserModel } from '@/data/protocols/db/user/user';
 import { PrismaClient, Prisma, user as PrismaUser } from '@prisma/client';
 
 // Must *CHANGE IT*
 class PrismaUserSpy {
-  createValue: Prisma.userCreateArgs = {} as Prisma.userCreateArgs;
+  createValue: Prisma.userCreateArgs = {
+    data: {
+      email: faker.internet.email(),
+      id: faker.random.uuid(),
+      name: faker.name.findName(),
+      password: faker.random.uuid(),
+      username: faker.internet.userName(),
+    },
+  } as Prisma.userCreateArgs;
 
   findValue: object = {};
 
   async create(value: Prisma.userCreateArgs): Promise<PrismaUser> {
     this.createValue = value;
-    const {
-      email,
-      id,
-      name,
-      password,
-      username,
-      created_at,
-      updated_at,
-    } = this.createValue.data;
+    const { email, id, name, password, username } = this.createValue.data;
 
     return {
       email,
@@ -37,10 +39,26 @@ class PrismaUserSpy {
     };
   }
 
-  async findUnique(value: Prisma.FindUniqueuserArgs): Promise<null> {
+  async findUnique(
+    value: Prisma.FindUniqueuserArgs
+  ): Promise<PrismaUser | null> {
     this.findValue = value.where;
+    const val = value.where;
+    const { data } = this.createValue;
 
-    return null;
+    const { email, id, name, password, username } = this.createValue.data;
+
+    return {
+      email,
+      id,
+      name,
+      password,
+      username,
+      phone_number: null,
+      updated_at: new Date(),
+      created_at: new Date(),
+      ...val,
+    };
   }
 }
 
@@ -56,7 +74,8 @@ jest.mock('@prisma/client', () => ({
   },
 }));
 
-class UserPrismaRepository implements AddUserRepository {
+class UserPrismaRepository
+  implements AddUserRepository, GetUserByEmailRepository {
   constructor(private readonly prisma = new PrismaClient()) {}
 
   async save(params: AddUserRepositoryParams): Promise<UserModel> {
@@ -80,14 +99,21 @@ class UserPrismaRepository implements AddUserRepository {
     };
   }
 
-  async getByEmail(email: string): Promise<undefined> {
+  async getByEmail(email: string): Promise<UserModel | undefined> {
     const user = await this.prisma.user.findUnique({
       where: {
         email,
       },
     });
+    if (!user) return undefined;
 
-    return undefined;
+    return {
+      email: user.email,
+      id: user.id,
+      name: user.name,
+      password: user.password,
+      username: user.username,
+    };
   }
 }
 
@@ -163,10 +189,20 @@ describe('UserPrismaRepository', () => {
     it('Should return undefined', async () => {
       const sut = makeSut();
       const email = faker.internet.email();
+      jest.spyOn(prismaUserSpy, 'findUnique').mockResolvedValueOnce(null);
 
       const promise = sut.getByEmail(email);
 
       await expect(promise).resolves.toBeUndefined();
+    });
+
+    it('Should returns UserModel', async () => {
+      const sut = makeSut();
+      const email = faker.internet.email();
+
+      const user = await sut.getByEmail(email);
+
+      expect(user).toEqual(expect.objectContaining({ email }));
     });
   });
 });
