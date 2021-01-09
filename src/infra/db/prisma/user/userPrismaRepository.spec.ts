@@ -6,6 +6,7 @@ import {
   AddUserRepositoryParams,
 } from '@/data/protocols/db/user/addUserRepository';
 import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
+import { GetUserByUsernameRepository } from '@/data/protocols/db/user/getUserByUsernameRepository';
 import { UserModel } from '@/data/protocols/db/user/user';
 import { PrismaClient, Prisma, user as PrismaUser } from '@prisma/client';
 
@@ -75,7 +76,10 @@ jest.mock('@prisma/client', () => ({
 }));
 
 class UserPrismaRepository
-  implements AddUserRepository, GetUserByEmailRepository {
+  implements
+    AddUserRepository,
+    GetUserByEmailRepository,
+    GetUserByUsernameRepository {
   constructor(private readonly prisma = new PrismaClient()) {}
 
   async save(params: AddUserRepositoryParams): Promise<UserModel> {
@@ -116,14 +120,22 @@ class UserPrismaRepository
     };
   }
 
-  async getByUsername(username: string): Promise<undefined> {
-    await this.prisma.user.findUnique({
+  async getByUsername(username: string): Promise<UserModel | undefined> {
+    const user = await this.prisma.user.findUnique({
       where: {
         username,
       },
     });
 
-    return undefined;
+    if (!user) return undefined;
+
+    return {
+      email: user.email,
+      id: user.id,
+      name: user.name,
+      password: user.password,
+      username: user.username,
+    };
   }
 }
 
@@ -243,10 +255,19 @@ describe('UserPrismaRepository', () => {
     it('Should returns undefined', async () => {
       const sut = makeSut();
       const username = faker.internet.userName();
-
+      jest.spyOn(prismaUserSpy, 'findUnique').mockResolvedValueOnce(null);
       const user = await sut.getByUsername(username);
 
       expect(user).toBeUndefined();
+    });
+
+    it('Should returns UserModel', async () => {
+      const sut = makeSut();
+      const username = faker.internet.userName();
+
+      const user = await sut.getByUsername(username);
+
+      expect(user).toEqual(expect.objectContaining({ username }));
     });
   });
 });
