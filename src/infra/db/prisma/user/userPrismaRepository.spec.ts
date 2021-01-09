@@ -11,6 +11,8 @@ import { PrismaClient, Prisma, user as PrismaUser } from '@prisma/client';
 class PrismaUserSpy {
   createValue: Prisma.userCreateArgs = {} as Prisma.userCreateArgs;
 
+  findValue: object = {};
+
   async create(value: Prisma.userCreateArgs): Promise<PrismaUser> {
     this.createValue = value;
     const {
@@ -34,6 +36,10 @@ class PrismaUserSpy {
       created_at: new Date(),
     };
   }
+
+  async findUnique(value: Prisma.FindUniqueuserArgs): Promise<void> {
+    this.findValue = value.where;
+  }
 }
 
 const prismaUserSpy = new PrismaUserSpy();
@@ -42,6 +48,8 @@ jest.mock('@prisma/client', () => ({
   PrismaClient: class {
     user = {
       create: (value: Prisma.userCreateArgs) => prismaUserSpy.create(value),
+      findUnique: (value: Prisma.FindUniqueuserArgs) =>
+        prismaUserSpy.findUnique(value),
     };
   },
 }));
@@ -68,6 +76,14 @@ class UserPrismaRepository implements AddUserRepository {
       password: user.password,
       username: user.username,
     };
+  }
+
+  async getByEmail(email: string): Promise<void> {
+    await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
   }
 }
 
@@ -113,6 +129,19 @@ describe('UserPrismaRepository', () => {
       const user = await sut.save(addUserRepositoryParams);
 
       expect(user).toEqual(expect.objectContaining(addUserRepositoryParams));
+    });
+  });
+
+  describe('getByEmail()', () => {
+    it('Should call findUnique with correct values', async () => {
+      const sut = makeSut();
+      const email = faker.internet.email();
+
+      await sut.getByEmail(email);
+
+      expect(prismaUserSpy.findValue).toEqual(
+        expect.objectContaining({ email })
+      );
     });
   });
 });
