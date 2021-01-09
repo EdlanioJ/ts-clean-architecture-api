@@ -9,13 +9,19 @@ import { PrismaClient, Prisma, user as PrismaUser } from '@prisma/client';
 
 // Must *CHANGE IT*
 class PrismaUserSpy {
-  createValue: object = {} as Prisma.userCreateArgs;
+  createValue: Prisma.userCreateArgs = {} as Prisma.userCreateArgs;
 
   async create(value: Prisma.userCreateArgs): Promise<PrismaUser> {
     this.createValue = value;
     const {
-      data: { email, id, name, password, username, created_at, updated_at },
-    } = value;
+      email,
+      id,
+      name,
+      password,
+      username,
+      created_at,
+      updated_at,
+    } = this.createValue.data;
 
     return {
       email,
