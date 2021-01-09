@@ -2,7 +2,7 @@ import faker from 'faker';
 
 import { mockAddUserRepositoryParams } from '@/infra/test/db/prisma/user/mockAddUserRepositoryParams';
 import { PrismaUserSpy } from '@/infra/test/db/prisma/user/prismaUserSpy';
-import { PrismaClient, Prisma, user as PrismaUser } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import { UserPrismaRepository } from './userPrismaRepository';
 

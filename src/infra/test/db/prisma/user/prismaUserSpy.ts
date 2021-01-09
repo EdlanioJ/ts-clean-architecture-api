@@ -1,6 +1,6 @@
 import faker from 'faker';
 
-import { PrismaClient, Prisma, user as PrismaUser } from '@prisma/client';
+import { Prisma, user as PrismaUser } from '@prisma/client';
 
 export class PrismaUserSpy {
   createValue: Prisma.userCreateArgs = {
