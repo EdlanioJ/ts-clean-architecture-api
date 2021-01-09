@@ -1,14 +1,32 @@
 import faker from 'faker';
 
-import { AddUserRepositoryParams } from '@/data/protocols/db/user/addUserRepository';
-import { PrismaClient, Prisma } from '@prisma/client';
+import {
+  AddUserRepository,
+  AddUserRepositoryParams,
+} from '@/data/protocols/db/user/addUserRepository';
+import { UserModel } from '@/data/protocols/db/user/user';
+import { PrismaClient, Prisma, user as PrismaUser } from '@prisma/client';
 
 // Must *CHANGE IT*
 class PrismaUserSpy {
   createValue: object = {} as Prisma.userCreateArgs;
 
-  async create(value: Prisma.userCreateArgs): Promise<void> {
+  async create(value: Prisma.userCreateArgs): Promise<PrismaUser> {
     this.createValue = value;
+    const {
+      data: { email, id, name, password, username, created_at, updated_at },
+    } = value;
+
+    return {
+      email,
+      id,
+      name,
+      password,
+      username,
+      phone_number: null,
+      updated_at: new Date(),
+      created_at: new Date(),
+    };
   }
 }
 
@@ -22,12 +40,12 @@ jest.mock('@prisma/client', () => ({
   },
 }));
 
-class UserPrismaRepository {
+class UserPrismaRepository implements AddUserRepository {
   constructor(private readonly prisma = new PrismaClient()) {}
 
-  async save(params: AddUserRepositoryParams): Promise<void> {
+  async save(params: AddUserRepositoryParams): Promise<UserModel> {
     const { email, id, name, password, username } = params;
-    await this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         email,
         id,
@@ -36,6 +54,14 @@ class UserPrismaRepository {
         username,
       },
     });
+
+    return {
+      email: user.email,
+      id: user.id,
+      name: user.name,
+      password: user.password,
+      username: user.username,
+    };
   }
 }
 
@@ -73,6 +99,14 @@ describe('UserPrismaRepository', () => {
       const promise = sut.save(mockAddUserRepositoryParams());
 
       await expect(promise).rejects.toThrowError();
+    });
+
+    it('Should return UserModel', async () => {
+      const sut = makeSut();
+      const addUserRepositoryParams = mockAddUserRepositoryParams();
+      const user = await sut.save(addUserRepositoryParams);
+
+      expect(user).toEqual(expect.objectContaining(addUserRepositoryParams));
     });
   });
 });
