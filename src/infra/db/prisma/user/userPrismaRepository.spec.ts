@@ -1,87 +1,12 @@
-/* eslint-disable consistent-return */
 import faker from 'faker';
 
-import {
-  AddUserRepository,
-  AddUserRepositoryParams,
-} from '@/data/protocols/db/user/addUserRepository';
-import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
-import { GetUserByUsernameRepository } from '@/data/protocols/db/user/getUserByUsernameRepository';
-import { UserModel } from '@/data/protocols/db/user/user';
+import { mockAddUserRepositoryParams } from '@/infra/test/db/prisma/user/mockAddUserRepositoryParams';
+import { PrismaUserSpy } from '@/infra/test/db/prisma/user/prismaUserSpy';
 import { PrismaClient, Prisma, user as PrismaUser } from '@prisma/client';
 
+import { UserPrismaRepository } from './userPrismaRepository';
+
 // Must *CHANGE IT*
-class PrismaUserSpy {
-  createValue: Prisma.userCreateArgs = {
-    data: {
-      email: faker.internet.email(),
-      id: faker.random.uuid(),
-      name: faker.name.findName(),
-      password: faker.random.uuid(),
-      username: faker.internet.userName(),
-    },
-  } as Prisma.userCreateArgs;
-
-  findValue: object = {};
-
-  async create(value: Prisma.userCreateArgs): Promise<PrismaUser> {
-    this.createValue = value;
-    const { email, id, name, password, username } = this.createValue.data;
-
-    return {
-      email,
-      id,
-      name,
-      password,
-      username,
-      phone_number: null,
-      updated_at: new Date(),
-      created_at: new Date(),
-    };
-  }
-
-  async findUnique(
-    value: Prisma.FindUniqueuserArgs
-  ): Promise<PrismaUser | null> {
-    this.findValue = value.where;
-    const val = value.where;
-    const { data } = this.createValue;
-
-    const { email, id, name, password, username } = this.createValue.data;
-
-    return {
-      email,
-      id,
-      name,
-      password,
-      username,
-      phone_number: null,
-      updated_at: new Date(),
-      created_at: new Date(),
-      ...val,
-    };
-  }
-
-  simulateCreateThrowError(): void {
-    jest.spyOn(PrismaUserSpy.prototype, 'create').mockImplementationOnce(() => {
-      throw new Error();
-    });
-  }
-
-  simulateFindUniqueReturnsNull(): void {
-    jest
-      .spyOn(PrismaUserSpy.prototype, 'findUnique')
-      .mockResolvedValueOnce(null);
-  }
-
-  simulateFindUniqueThrowError(): void {
-    jest
-      .spyOn(PrismaUserSpy.prototype, 'findUnique')
-      .mockImplementationOnce(() => {
-        throw new Error();
-      });
-  }
-}
 
 const prismaUserSpy = new PrismaUserSpy();
 
@@ -95,80 +20,9 @@ jest.mock('@prisma/client', () => ({
   },
 }));
 
-class UserPrismaRepository
-  implements
-    AddUserRepository,
-    GetUserByEmailRepository,
-    GetUserByUsernameRepository {
-  constructor(private readonly prisma = new PrismaClient()) {}
-
-  async save(params: AddUserRepositoryParams): Promise<UserModel> {
-    const { email, id, name, password, username } = params;
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        id,
-        name,
-        password,
-        username,
-      },
-    });
-
-    return {
-      email: user.email,
-      id: user.id,
-      name: user.name,
-      password: user.password,
-      username: user.username,
-    };
-  }
-
-  async getByEmail(email: string): Promise<UserModel | undefined> {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-    if (!user) return undefined;
-
-    return {
-      email: user.email,
-      id: user.id,
-      name: user.name,
-      password: user.password,
-      username: user.username,
-    };
-  }
-
-  async getByUsername(username: string): Promise<UserModel | undefined> {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        username,
-      },
-    });
-
-    if (!user) return undefined;
-
-    return {
-      email: user.email,
-      id: user.id,
-      name: user.name,
-      password: user.password,
-      username: user.username,
-    };
-  }
-}
-
 const makeSut = (): UserPrismaRepository => {
   return new UserPrismaRepository();
 };
-const mockAddUserRepositoryParams = (): AddUserRepositoryParams => ({
-  email: faker.internet.email(),
-  id: faker.random.uuid(),
-  name: faker.name.findName(),
-  password: faker.random.uuid(),
-  username: faker.internet.userName(),
-});
 
 describe('UserPrismaRepository', () => {
   describe('save()', () => {
