@@ -115,6 +115,14 @@ class UserPrismaRepository
       username: user.username,
     };
   }
+
+  async getByUsername(username: string): Promise<void> {
+    await this.prisma.user.findUnique({
+      where: {
+        username,
+      },
+    });
+  }
 }
 
 const makeSut = (): UserPrismaRepository => {
@@ -203,6 +211,18 @@ describe('UserPrismaRepository', () => {
       const user = await sut.getByEmail(email);
 
       expect(user).toEqual(expect.objectContaining({ email }));
+    });
+  });
+
+  describe('getByUsername()', () => {
+    it('Should call findUnique with correct values', async () => {
+      const sut = makeSut();
+      const username = faker.internet.userName();
+      await sut.getByUsername(username);
+
+      expect(prismaUserSpy.findValue).toEqual(
+        expect.objectContaining({ username })
+      );
     });
   });
 });
