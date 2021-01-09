@@ -116,12 +116,14 @@ class UserPrismaRepository
     };
   }
 
-  async getByUsername(username: string): Promise<void> {
+  async getByUsername(username: string): Promise<undefined> {
     await this.prisma.user.findUnique({
       where: {
         username,
       },
     });
+
+    return undefined;
   }
 }
 
@@ -236,6 +238,15 @@ describe('UserPrismaRepository', () => {
       const promise = sut.getByUsername(username);
 
       await expect(promise).rejects.toThrowError();
+    });
+
+    it('Should returns undefined', async () => {
+      const sut = makeSut();
+      const username = faker.internet.userName();
+
+      const user = await sut.getByUsername(username);
+
+      expect(user).toBeUndefined();
     });
   });
 });
