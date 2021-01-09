@@ -80,12 +80,14 @@ class UserPrismaRepository implements AddUserRepository {
     };
   }
 
-  async getByEmail(email: string): Promise<void> {
+  async getByEmail(email: string): Promise<undefined> {
     const user = await this.prisma.user.findUnique({
       where: {
         email,
       },
     });
+
+    return undefined;
   }
 }
 
@@ -156,6 +158,15 @@ describe('UserPrismaRepository', () => {
       const promise = sut.getByEmail(email);
 
       await expect(promise).rejects.toThrowError();
+    });
+
+    it('Should return undefined', async () => {
+      const sut = makeSut();
+      const email = faker.internet.email();
+
+      const promise = sut.getByEmail(email);
+
+      await expect(promise).resolves.toBeUndefined();
     });
   });
 });
