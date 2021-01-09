@@ -77,7 +77,7 @@ const mockAddUserRepositoryParams = (): AddUserRepositoryParams => ({
 });
 
 describe('UserPrismaRepository', () => {
-  describe('add()', () => {
+  describe('save()', () => {
     it('Should call create with correct values', async () => {
       const sut = makeSut();
       const addUserRepositoryParams = mockAddUserRepositoryParams();
