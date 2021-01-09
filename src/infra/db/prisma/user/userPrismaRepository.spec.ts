@@ -61,6 +61,26 @@ class PrismaUserSpy {
       ...val,
     };
   }
+
+  simulateCreateThrowError(): void {
+    jest.spyOn(PrismaUserSpy.prototype, 'create').mockImplementationOnce(() => {
+      throw new Error();
+    });
+  }
+
+  simulateFindUniqueReturnsNull(): void {
+    jest
+      .spyOn(PrismaUserSpy.prototype, 'findUnique')
+      .mockResolvedValueOnce(null);
+  }
+
+  simulateFindUniqueThrowError(): void {
+    jest
+      .spyOn(PrismaUserSpy.prototype, 'findUnique')
+      .mockImplementationOnce(() => {
+        throw new Error();
+      });
+  }
 }
 
 const prismaUserSpy = new PrismaUserSpy();
@@ -166,9 +186,7 @@ describe('UserPrismaRepository', () => {
 
     it('Should throw if create throws an Error', async () => {
       const sut = makeSut();
-      jest.spyOn(prismaUserSpy, 'create').mockImplementationOnce(() => {
-        throw new Error();
-      });
+      prismaUserSpy.simulateCreateThrowError();
 
       const promise = sut.save(mockAddUserRepositoryParams());
 
@@ -199,9 +217,7 @@ describe('UserPrismaRepository', () => {
     it('Should throw if findUnique throws an Error', async () => {
       const sut = makeSut();
       const email = faker.internet.email();
-      jest.spyOn(prismaUserSpy, 'findUnique').mockImplementationOnce(() => {
-        throw new Error();
-      });
+      prismaUserSpy.simulateFindUniqueThrowError();
 
       const promise = sut.getByEmail(email);
 
@@ -211,7 +227,7 @@ describe('UserPrismaRepository', () => {
     it('Should return undefined', async () => {
       const sut = makeSut();
       const email = faker.internet.email();
-      jest.spyOn(prismaUserSpy, 'findUnique').mockResolvedValueOnce(null);
+      prismaUserSpy.simulateFindUniqueReturnsNull();
 
       const promise = sut.getByEmail(email);
 
@@ -241,9 +257,7 @@ describe('UserPrismaRepository', () => {
 
     it('Should throws if findUnique throws an Error', async () => {
       const sut = makeSut();
-      jest.spyOn(prismaUserSpy, 'findUnique').mockImplementationOnce(() => {
-        throw new Error();
-      });
+      prismaUserSpy.simulateFindUniqueThrowError();
 
       const username = faker.internet.userName();
 
@@ -255,7 +269,8 @@ describe('UserPrismaRepository', () => {
     it('Should returns undefined', async () => {
       const sut = makeSut();
       const username = faker.internet.userName();
-      jest.spyOn(prismaUserSpy, 'findUnique').mockResolvedValueOnce(null);
+      prismaUserSpy.simulateFindUniqueReturnsNull();
+
       const user = await sut.getByUsername(username);
 
       expect(user).toBeUndefined();
