@@ -25,7 +25,7 @@ jest.mock('@prisma/client', () => ({
 class UserPrismaRepository {
   constructor(private readonly prisma = new PrismaClient()) {}
 
-  async add(params: AddUserRepositoryParams): Promise<void> {
+  async save(params: AddUserRepositoryParams): Promise<void> {
     const { email, id, name, password, username } = params;
     await this.prisma.user.create({
       data: {
@@ -55,7 +55,7 @@ describe('UserPrismaRepository', () => {
     it('Should call create with correct values', async () => {
       const sut = makeSut();
       const addUserRepositoryParams = mockAddUserRepositoryParams();
-      await sut.add(addUserRepositoryParams);
+      await sut.save(addUserRepositoryParams);
 
       expect(prismaUserSpy.createValue).toEqual(
         expect.objectContaining({
@@ -70,7 +70,7 @@ describe('UserPrismaRepository', () => {
         throw new Error();
       });
 
-      const promise = sut.add(mockAddUserRepositoryParams());
+      const promise = sut.save(mockAddUserRepositoryParams());
 
       await expect(promise).rejects.toThrowError();
     });
