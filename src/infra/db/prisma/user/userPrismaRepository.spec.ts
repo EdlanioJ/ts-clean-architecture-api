@@ -55,13 +55,24 @@ describe('UserPrismaRepository', () => {
     it('Should call create with correct values', async () => {
       const sut = makeSut();
       const addUserRepositoryParams = mockAddUserRepositoryParams();
-      const user = await sut.add(addUserRepositoryParams);
+      await sut.add(addUserRepositoryParams);
 
       expect(prismaUserSpy.createValue).toEqual(
         expect.objectContaining({
           data: addUserRepositoryParams,
         })
       );
+    });
+
+    it('Should throw if create throws an Error', async () => {
+      const sut = makeSut();
+      jest.spyOn(prismaUserSpy, 'create').mockImplementationOnce(() => {
+        throw new Error();
+      });
+
+      const promise = sut.add(mockAddUserRepositoryParams());
+
+      await expect(promise).rejects.toThrowError();
     });
   });
 });
