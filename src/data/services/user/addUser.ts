@@ -1,5 +1,5 @@
 import { Hasher } from '@/data/protocols/cryptography/hasher';
-import { UuidProvider } from '@/data/protocols/cryptography/uuidProvder';
+import { IDGenerator } from '@/data/protocols/cryptography/idGenerator';
 import { AddUserRepository } from '@/data/protocols/db/user/addUserRepository';
 import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
 import { GetUserByUsernameRepository } from '@/data/protocols/db/user/getUserByUsernameRepository';
@@ -10,7 +10,7 @@ export class AddUserService implements AddUser {
     private readonly getUserByEmailRepository: GetUserByEmailRepository,
     private readonly getUserByUsernameRepository: GetUserByUsernameRepository,
     private readonly hasher: Hasher,
-    private readonly uuidProvider: UuidProvider,
+    private readonly idGenerator: IDGenerator,
     private readonly addUserRepository: AddUserRepository
   ) {}
 
@@ -27,7 +27,7 @@ export class AddUserService implements AddUser {
 
     if (getUserByUsername) throw new Error();
 
-    const id = this.uuidProvider.uuidv4();
+    const id = this.idGenerator.uuidv4();
 
     const passwordHash = await this.hasher.hash(params.password);
 

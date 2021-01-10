@@ -1,8 +1,8 @@
 import faker from 'faker';
 
-import { UuidProvider } from '@/data/protocols/cryptography/uuidProvder';
+import { IDGenerator } from '@/data/protocols/cryptography/idGenerator';
 
-export class UuidProviderSpy implements UuidProvider {
+export class IDGeneratorSpy implements IDGenerator {
   id = faker.random.uuid();
 
   uuidv4(): string {
@@ -11,7 +11,7 @@ export class UuidProviderSpy implements UuidProvider {
 
   simulateUuidv4ThrowError(): void {
     jest
-      .spyOn(UuidProviderSpy.prototype, 'uuidv4')
+      .spyOn(IDGeneratorSpy.prototype, 'uuidv4')
       .mockImplementationOnce(() => {
         throw new Error();
       });

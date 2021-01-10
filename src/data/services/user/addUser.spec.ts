@@ -1,5 +1,5 @@
 import { HasherSpy } from '@/data/tests/cryptography/hasherSpy';
-import { UuidProviderSpy } from '@/data/tests/cryptography/uuidProviderSpy';
+import { IDGeneratorSpy } from '@/data/tests/cryptography/idGenerator';
 import { AddUserRepositorySpy } from '@/data/tests/db/user/addUserRepositorySpy';
 import { GetUserByUsernameRepositorySpy } from '@/data/tests/db/user/getUserByUsernameRepositorySpy';
 import { GetUserByEmailRepositorySpy } from '@/data/tests/db/user/getUserEmailRepositorySpy';
@@ -12,20 +12,20 @@ type SutType = {
   getUserByEmailRepositorySpy: GetUserByEmailRepositorySpy;
   getUserByUsernameRepositorySpy: GetUserByUsernameRepositorySpy;
   hasherSpy: HasherSpy;
-  uuidProviderSpy: UuidProviderSpy;
+  idGeneratorSpy: IDGeneratorSpy;
   addUserRepositorySpy: AddUserRepositorySpy;
 };
 const makeSut = (): SutType => {
   const getUserByEmailRepositorySpy = new GetUserByEmailRepositorySpy();
   const getUserByUsernameRepositorySpy = new GetUserByUsernameRepositorySpy();
   const hasherSpy = new HasherSpy();
-  const uuidProviderSpy = new UuidProviderSpy();
+  const idGeneratorSpy = new IDGeneratorSpy();
   const addUserRepositorySpy = new AddUserRepositorySpy();
   const sut = new AddUserService(
     getUserByEmailRepositorySpy,
     getUserByUsernameRepositorySpy,
     hasherSpy,
-    uuidProviderSpy,
+    idGeneratorSpy,
     addUserRepositorySpy
   );
 
@@ -35,7 +35,7 @@ const makeSut = (): SutType => {
     getUserByUsernameRepositorySpy,
     hasherSpy,
     sut,
-    uuidProviderSpy,
+    idGeneratorSpy,
   };
 };
 
@@ -154,11 +154,11 @@ describe('AddUser use case', () => {
       getUserByUsernameRepositorySpy,
       getUserByEmailRepositorySpy,
       sut,
-      uuidProviderSpy,
+      idGeneratorSpy,
     } = makeSut();
     getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
     getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
-    uuidProviderSpy.simulateUuidv4ThrowError();
+    idGeneratorSpy.simulateUuidv4ThrowError();
 
     const promise = sut.add(mockAddUserParams());
 
@@ -210,7 +210,7 @@ describe('AddUser use case', () => {
       getUserByEmailRepositorySpy,
       sut,
       addUserRepositorySpy,
-      uuidProviderSpy,
+      idGeneratorSpy,
       hasherSpy,
     } = makeSut();
     getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
@@ -221,7 +221,7 @@ describe('AddUser use case', () => {
 
     expect(user).toEqual(
       expect.objectContaining({
-        id: uuidProviderSpy.id,
+        id: idGeneratorSpy.id,
         password: hasherSpy.digest,
         name: addUserParams.name,
         email: addUserParams.email,
