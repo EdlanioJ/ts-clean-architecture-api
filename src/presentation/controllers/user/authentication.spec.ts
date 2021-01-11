@@ -2,14 +2,21 @@ import faker from 'faker';
 
 import { mockAuthParams } from '@/data/tests/db/user/mockAuthParams';
 import { Authentication } from '@/domain/useCases/user/authentication';
-import { HttpRequest } from '@/presentation/protocols/http';
+import { serverError } from '@/presentation/helpers/http/http';
+import { HttpRequest, HttpResponse } from '@/presentation/protocols/http';
 
 class AuthenticationController {
   constructor(private readonly authentication: Authentication) {}
 
-  async handle(httpRequest: HttpRequest): Promise<void> {
-    const { email, password } = httpRequest.body;
-    await this.authentication.auth({ email, password });
+  async handle(httpRequest: HttpRequest): Promise<HttpResponse | undefined> {
+    try {
+      const { email, password } = httpRequest.body;
+      await this.authentication.auth({ email, password });
+
+      return undefined;
+    } catch (error) {
+      return serverError(error);
+    }
   }
 }
 
@@ -50,5 +57,17 @@ describe('Authentciation Controller', () => {
     expect(authenticationSpy.authParams).toEqual(
       expect.objectContaining(httpRequest.body)
     );
+  });
+
+  it('Should return 500 if Authentication throws', async () => {
+    const { authenticationSpy, sut } = makeSut();
+
+    jest.spyOn(authenticationSpy, 'auth').mockImplementationOnce(() => {
+      throw new Error();
+    });
+
+    const httpResponse = await sut.handle(mockRequest());
+
+    expect(httpResponse).toEqual(serverError(new Error()));
   });
 });
