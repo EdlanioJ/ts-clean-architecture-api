@@ -1,8 +1,9 @@
 import faker from 'faker';
 
 import { mockAuthParams } from '@/data/tests/db/user/mockAuthParams';
+import { UnauthorizedError } from '@/domain/errors/user/unauthorized';
 import { Authentication } from '@/domain/useCases/user/authentication';
-import { serverError } from '@/presentation/helpers/http/http';
+import { serverError, unauthorized } from '@/presentation/helpers/http/http';
 import { HttpRequest, HttpResponse } from '@/presentation/protocols/http';
 
 class AuthenticationController {
@@ -15,6 +16,9 @@ class AuthenticationController {
 
       return undefined;
     } catch (error) {
+      if (error.name === 'UnauthorizedError') {
+        return unauthorized(error);
+      }
       return serverError(error);
     }
   }
@@ -69,5 +73,16 @@ describe('Authentciation Controller', () => {
     const httpResponse = await sut.handle(mockRequest());
 
     expect(httpResponse).toEqual(serverError(new Error()));
+  });
+
+  it('Should return 401 if Authentication throws an UnauthorizedError', async () => {
+    const { authenticationSpy, sut } = makeSut();
+    jest.spyOn(authenticationSpy, 'auth').mockImplementationOnce(() => {
+      throw new UnauthorizedError('email');
+    });
+
+    const httpResponse = await sut.handle(mockRequest());
+
+    expect(httpResponse).toEqual(unauthorized(new UnauthorizedError('email')));
   });
 });
