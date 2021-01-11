@@ -2,15 +2,22 @@ import faker from 'faker';
 
 import { mockAddUserParams } from '@/data/tests/db/user/mockAddUserParams';
 import { AddUser } from '@/domain/useCases/user/addUser';
-import { HttpRequest } from '@/presentation/protocols/http';
+import { serverError } from '@/presentation/helpers/http/http';
+import { HttpRequest, HttpResponse } from '@/presentation/protocols/http';
 
 class AddUserController {
   constructor(private readonly addUser: AddUser) {}
 
-  async handle(httpRequest: HttpRequest): Promise<void> {
-    const { email, name, password, username } = httpRequest.body;
+  async handle(httpRequest: HttpRequest): Promise<HttpResponse | undefined> {
+    try {
+      const { email, name, password, username } = httpRequest.body;
 
-    await this.addUser.add({ email, name, password, username });
+      await this.addUser.add({ email, name, password, username });
+
+      return undefined;
+    } catch (error) {
+      return serverError(error);
+    }
   }
 }
 
@@ -59,5 +66,16 @@ describe('AddUserController', () => {
     expect(addUserSpy.addParams).toEqual(
       expect.objectContaining(httpRequest.body)
     );
+  });
+
+  it('Should return 500 if AddUser throws', async () => {
+    const { addUserSpy, sut } = makeSut();
+    jest.spyOn(addUserSpy, 'add').mockImplementationOnce(() => {
+      throw new Error();
+    });
+
+    const httpResponse = await sut.handle(mockRequest());
+
+    expect(httpResponse).toEqual(serverError(new Error()));
   });
 });
