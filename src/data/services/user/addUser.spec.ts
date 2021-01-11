@@ -4,6 +4,7 @@ import { AddUserRepositorySpy } from '@/data/tests/db/user/addUserRepositorySpy'
 import { GetUserByUsernameRepositorySpy } from '@/data/tests/db/user/getUserByUsernameRepositorySpy';
 import { GetUserByEmailRepositorySpy } from '@/data/tests/db/user/getUserEmailRepositorySpy';
 import { mockAddUserParams } from '@/data/tests/db/user/mockAddUserParams';
+import { ParamInUseError } from '@/domain/errors/user/paramInUse';
 
 import { AddUserService } from './addUser';
 
@@ -68,7 +69,7 @@ describe('AddUser use case', () => {
 
     const promise = sut.add(mockAddUserParams());
 
-    await expect(promise).rejects.toThrow();
+    await expect(promise).rejects.toThrow(new ParamInUseError('email'));
   });
 
   it('Should call GetUserByUsernameRepository with correct username', async () => {
@@ -114,7 +115,7 @@ describe('AddUser use case', () => {
 
     const promise = sut.add(mockAddUserParams());
 
-    await expect(promise).rejects.toThrow();
+    await expect(promise).rejects.toThrow(new ParamInUseError('username'));
   });
 
   it('Should call Hasher with correct plaintext', async () => {

@@ -3,6 +3,7 @@ import { IDGenerator } from '@/data/protocols/cryptography/idGenerator';
 import { AddUserRepository } from '@/data/protocols/db/user/addUserRepository';
 import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
 import { GetUserByUsernameRepository } from '@/data/protocols/db/user/getUserByUsernameRepository';
+import { ParamInUseError } from '@/domain/errors/user/paramInUse';
 import { AddUser } from '@/domain/useCases/user/addUser';
 
 export class AddUserService implements AddUser {
@@ -19,13 +20,13 @@ export class AddUserService implements AddUser {
       params.email
     );
 
-    if (getUserByEmail) throw new Error();
+    if (getUserByEmail) throw new ParamInUseError('email');
 
     const getUserByUsername = await this.getUserByUsernameRepository.getByUsername(
       params.username
     );
 
-    if (getUserByUsername) throw new Error();
+    if (getUserByUsername) throw new ParamInUseError('username');
 
     const id = this.idGenerator.uuidv4();
 
