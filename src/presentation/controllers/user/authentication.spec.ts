@@ -1,5 +1,3 @@
-import faker from 'faker';
-
 import { mockAuthParams } from '@/data/tests/db/user/mockAuthParams';
 import { UnauthorizedError } from '@/domain/errors/user/unauthorized';
 import { Authentication } from '@/domain/useCases/user/authentication';
@@ -8,40 +6,10 @@ import {
   serverError,
   unauthorized,
 } from '@/presentation/helpers/http/http';
-import { Controller } from '@/presentation/protocols/controller';
-import { HttpRequest, HttpResponse } from '@/presentation/protocols/http';
+import { HttpRequest } from '@/presentation/protocols/http';
+import { AuthenticationSpy } from '@/presentation/tests/user/autheticationSpy';
 
-class AuthenticationController implements Controller {
-  constructor(private readonly authentication: Authentication) {}
-
-  async handle(
-    httpRequest: HttpRequest
-  ): Promise<HttpResponse<Authentication.Result>> {
-    try {
-      const { email, password } = httpRequest.body;
-      const httpResponse = await this.authentication.auth({ email, password });
-
-      return ok(httpResponse);
-    } catch (error) {
-      if (error.name === 'UnauthorizedError') {
-        return unauthorized(error);
-      }
-      return serverError(error);
-    }
-  }
-}
-
-class AuthenticationSpy implements Authentication {
-  authParams = {};
-
-  authResult = faker.random.uuid();
-
-  async auth(params: Authentication.Params): Promise<Authentication.Result> {
-    this.authParams = params;
-
-    return { token: this.authResult };
-  }
-}
+import { AuthenticationController } from './authentication';
 
 const mockRequest = (): HttpRequest => ({
   body: mockAuthParams(),
@@ -58,6 +26,7 @@ const makeSut = (): SutType => {
 
   return { authenticationSpy, sut };
 };
+
 describe('Authentciation Controller', () => {
   it('Should call Authentication with correct values', async () => {
     const { authenticationSpy, sut } = makeSut();
