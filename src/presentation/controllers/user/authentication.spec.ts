@@ -3,18 +3,25 @@ import faker from 'faker';
 import { mockAuthParams } from '@/data/tests/db/user/mockAuthParams';
 import { UnauthorizedError } from '@/domain/errors/user/unauthorized';
 import { Authentication } from '@/domain/useCases/user/authentication';
-import { serverError, unauthorized } from '@/presentation/helpers/http/http';
+import {
+  ok,
+  serverError,
+  unauthorized,
+} from '@/presentation/helpers/http/http';
+import { Controller } from '@/presentation/protocols/controller';
 import { HttpRequest, HttpResponse } from '@/presentation/protocols/http';
 
-class AuthenticationController {
+class AuthenticationController implements Controller {
   constructor(private readonly authentication: Authentication) {}
 
-  async handle(httpRequest: HttpRequest): Promise<HttpResponse | undefined> {
+  async handle(
+    httpRequest: HttpRequest
+  ): Promise<HttpResponse<Authentication.Result>> {
     try {
       const { email, password } = httpRequest.body;
-      await this.authentication.auth({ email, password });
+      const httpResponse = await this.authentication.auth({ email, password });
 
-      return undefined;
+      return ok(httpResponse);
     } catch (error) {
       if (error.name === 'UnauthorizedError') {
         return unauthorized(error);
@@ -84,5 +91,13 @@ describe('Authentciation Controller', () => {
     const httpResponse = await sut.handle(mockRequest());
 
     expect(httpResponse).toEqual(unauthorized(new UnauthorizedError('email')));
+  });
+
+  it('Should return 200 if valid credentials are provided', async () => {
+    const { authenticationSpy, sut } = makeSut();
+
+    const httpResponse = await sut.handle(mockRequest());
+
+    expect(httpResponse).toEqual(ok({ token: authenticationSpy.authResult }));
   });
 });
