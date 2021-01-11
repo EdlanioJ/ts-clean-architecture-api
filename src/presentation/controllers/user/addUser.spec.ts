@@ -1,62 +1,14 @@
-import faker from 'faker';
-
 import { mockAddUserParams } from '@/data/tests/db/user/mockAddUserParams';
 import { ParamInUseError } from '@/domain/errors/user/paramInUse';
-import { AddUser } from '@/domain/useCases/user/addUser';
 import { forbidden, ok, serverError } from '@/presentation/helpers/http/http';
-import { Controller } from '@/presentation/protocols/controller';
-import { HttpRequest, HttpResponse } from '@/presentation/protocols/http';
+import { HttpRequest } from '@/presentation/protocols/http';
+import { AddUserSpy } from '@/presentation/tests/user/addUserSpy';
 
-class AddUserController implements Controller {
-  constructor(private readonly addUser: AddUser) {}
-
-  async handle(
-    httpRequest: HttpRequest
-  ): Promise<HttpResponse<AddUser.Result>> {
-    try {
-      const { email, name, password, username } = httpRequest.body;
-
-      const httpResponse = await this.addUser.add({
-        email,
-        name,
-        password,
-        username,
-      });
-
-      return ok(httpResponse);
-    } catch (error) {
-      if (error.name === 'ParamInUseError') {
-        return forbidden(error);
-      }
-      return serverError(error);
-    }
-  }
-}
-
-const mockAddResult = (): AddUser.Result => ({
-  id: faker.random.uuid(),
-  email: faker.internet.email(),
-  name: faker.name.findName(),
-  password: faker.random.uuid(),
-  username: faker.internet.userName(),
-});
+import { AddUserController } from './addUser';
 
 const mockRequest = (): HttpRequest => ({
   body: mockAddUserParams(),
 });
-class AddUserSpy implements AddUser {
-  addParams = mockAddUserParams();
-
-  addResult = mockAddResult();
-
-  async add(params: AddUser.Params): Promise<AddUser.Result> {
-    this.addParams = params;
-
-    this.addResult = { ...this.addResult, ...params };
-
-    return this.addResult;
-  }
-}
 
 type SutType = {
   sut: AddUserController;
