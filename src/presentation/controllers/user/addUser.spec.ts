@@ -1,8 +1,9 @@
 import faker from 'faker';
 
 import { mockAddUserParams } from '@/data/tests/db/user/mockAddUserParams';
+import { ParamInUseError } from '@/domain/errors/user/paramInUse';
 import { AddUser } from '@/domain/useCases/user/addUser';
-import { serverError } from '@/presentation/helpers/http/http';
+import { forbidden, serverError } from '@/presentation/helpers/http/http';
 import { HttpRequest, HttpResponse } from '@/presentation/protocols/http';
 
 class AddUserController {
@@ -16,6 +17,9 @@ class AddUserController {
 
       return undefined;
     } catch (error) {
+      if (error.name === 'ParamInUseError') {
+        return forbidden(error);
+      }
       return serverError(error);
     }
   }
@@ -77,5 +81,16 @@ describe('AddUserController', () => {
     const httpResponse = await sut.handle(mockRequest());
 
     expect(httpResponse).toEqual(serverError(new Error()));
+  });
+
+  it('Should return 403 if AddUser throws ParamInUseError', async () => {
+    const { addUserSpy, sut } = makeSut();
+    jest.spyOn(addUserSpy, 'add').mockImplementationOnce(() => {
+      throw new ParamInUseError('email');
+    });
+
+    const httpResponse = await sut.handle(mockRequest());
+
+    expect(httpResponse).toEqual(forbidden(new ParamInUseError('email')));
   });
 });
