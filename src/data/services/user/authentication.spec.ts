@@ -2,7 +2,7 @@ import { EncrypterSpy } from '@/data/tests/cryptography/encryperSpy';
 import { HashComparerSpy } from '@/data/tests/cryptography/hashCompareSpy';
 import { GetUserByEmailRepositorySpy } from '@/data/tests/db/user/getUserEmailRepositorySpy';
 import { mockAuthParams } from '@/data/tests/db/user/mockAuthParams';
-import { AuthenticationError } from '@/domain/errors/user/authemtication';
+import { UnauthorizedError } from '@/domain/errors/user/unauthorized';
 
 import { AuthenticationService } from './authentication';
 
@@ -48,7 +48,7 @@ describe('Authentication UseCase', () => {
     const authParams = mockAuthParams();
     const promise = sut.auth(authParams);
 
-    await expect(promise).rejects.toThrow(new AuthenticationError('email'));
+    await expect(promise).rejects.toThrow(new UnauthorizedError('email'));
   });
 
   it('Should call HashComparer with correct values', async () => {
@@ -81,7 +81,7 @@ describe('Authentication UseCase', () => {
 
     const promise = sut.auth(authParams);
 
-    await expect(promise).rejects.toThrow(new AuthenticationError('password'));
+    await expect(promise).rejects.toThrow(new UnauthorizedError('password'));
   });
 
   it('Should call Encrypter with correct values', async () => {
