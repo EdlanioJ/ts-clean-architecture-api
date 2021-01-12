@@ -1,17 +1,11 @@
-import {
-  AddUserRepository,
-  AddUserRepositoryParams,
-} from '@/data/protocols/db/user/addUserRepository';
-import { GetUserByEmailRepository } from '@/data/protocols/db/user/getUserByEmail';
-import { GetUserByUsernameRepository } from '@/data/protocols/db/user/getUserByUsernameRepository';
 import { UserModel } from '@/data/protocols/db/user/user';
+import {
+  AddUserRepositoryParams,
+  UserRepository,
+} from '@/data/protocols/db/user/userRepository';
 import { PrismaClient } from '@prisma/client';
 
-export class UserPrismaRepository
-  implements
-    AddUserRepository,
-    GetUserByEmailRepository,
-    GetUserByUsernameRepository {
+export class UserPrismaRepository implements UserRepository {
   constructor(private readonly prisma = new PrismaClient()) {}
 
   async save(params: AddUserRepositoryParams): Promise<UserModel> {

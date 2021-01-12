@@ -1,49 +1,49 @@
 import { EncrypterSpy } from '@/data/tests/cryptography/encryperSpy';
 import { HashComparerSpy } from '@/data/tests/cryptography/hashCompareSpy';
-import { GetUserByEmailRepositorySpy } from '@/data/tests/db/user/getUserEmailRepositorySpy';
 import { mockAuthParams } from '@/data/tests/db/user/mockAuthParams';
+import { UserRepositorySpy } from '@/data/tests/db/user/userRepositorySpy';
 import { UnauthorizedError } from '@/domain/errors/user/unauthorized';
 
 import { AuthenticationService } from './authentication';
 
 type SutType = {
   sut: AuthenticationService;
-  getUserByEmailRepositorySpy: GetUserByEmailRepositorySpy;
+  userRepositorySpy: UserRepositorySpy;
   hashComparerSpy: HashComparerSpy;
   encrypterSpy: EncrypterSpy;
 };
 
 const makeSut = (): SutType => {
-  const getUserByEmailRepositorySpy = new GetUserByEmailRepositorySpy();
+  const userRepositorySpy = new UserRepositorySpy();
   const hashComparerSpy = new HashComparerSpy();
   const encrypterSpy = new EncrypterSpy();
   const sut = new AuthenticationService(
+    userRepositorySpy,
     encrypterSpy,
-    getUserByEmailRepositorySpy,
     hashComparerSpy
   );
 
-  return { encrypterSpy, getUserByEmailRepositorySpy, hashComparerSpy, sut };
+  return { encrypterSpy, userRepositorySpy, hashComparerSpy, sut };
 };
 describe('Authentication UseCase', () => {
   it('Should call GetUserByEmailRepository with correct email', async () => {
-    const { getUserByEmailRepositorySpy, sut } = makeSut();
+    const { userRepositorySpy, sut } = makeSut();
     const authParams = mockAuthParams();
     await sut.auth(authParams);
-    expect(getUserByEmailRepositorySpy.email).toBe(authParams.email);
+    expect(userRepositorySpy.email).toBe(authParams.email);
   });
 
   it('Should throw if GetUserByEmailRepository throws', () => {
-    const { getUserByEmailRepositorySpy, sut } = makeSut();
-    getUserByEmailRepositorySpy.simulateGetByEmailThrowError();
+    const { userRepositorySpy, sut } = makeSut();
+    userRepositorySpy.simulateGetByEmailThrowError();
     const promise = sut.auth(mockAuthParams());
 
     expect(promise).rejects.toThrowError();
   });
 
   it('Should throw if GetUserByEmailRepository returns undefined', async () => {
-    const { getUserByEmailRepositorySpy, sut } = makeSut();
-    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
+    const { userRepositorySpy, sut } = makeSut();
+    userRepositorySpy.simulateGetByEmailReturnsUndefined();
 
     const authParams = mockAuthParams();
     const promise = sut.auth(authParams);
@@ -52,15 +52,13 @@ describe('Authentication UseCase', () => {
   });
 
   it('Should call HashComparer with correct values', async () => {
-    const { sut, hashComparerSpy, getUserByEmailRepositorySpy } = makeSut();
+    const { sut, hashComparerSpy, userRepositorySpy } = makeSut();
     const authParams = mockAuthParams();
 
     await sut.auth(authParams);
 
     expect(hashComparerSpy.plaintext).toBe(authParams.password);
-    expect(hashComparerSpy.digest).toBe(
-      getUserByEmailRepositorySpy.user.password
-    );
+    expect(hashComparerSpy.digest).toBe(userRepositorySpy.user.password);
   });
 
   it('Should throws if HashComparer throws', () => {
@@ -74,7 +72,7 @@ describe('Authentication UseCase', () => {
   });
 
   it('Should throws if HashComparer returns false', async () => {
-    const { sut, hashComparerSpy, getUserByEmailRepositorySpy } = makeSut();
+    const { sut, hashComparerSpy, userRepositorySpy } = makeSut();
     hashComparerSpy.simulateCompareReturnsFalse();
 
     const authParams = mockAuthParams();
@@ -85,12 +83,12 @@ describe('Authentication UseCase', () => {
   });
 
   it('Should call Encrypter with correct values', async () => {
-    const { encrypterSpy, getUserByEmailRepositorySpy, sut } = makeSut();
+    const { encrypterSpy, userRepositorySpy, sut } = makeSut();
     const authParams = mockAuthParams();
 
     await sut.auth(authParams);
 
-    expect(encrypterSpy.plaintext).toBe(getUserByEmailRepositorySpy.user.id);
+    expect(encrypterSpy.plaintext).toBe(userRepositorySpy.user.id);
   });
 
   it('Should throw if Encrypter throws', async () => {

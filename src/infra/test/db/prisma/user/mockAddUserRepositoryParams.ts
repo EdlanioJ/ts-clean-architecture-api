@@ -1,6 +1,6 @@
 import faker from 'faker';
 
-import { AddUserRepositoryParams } from '@/data/protocols/db/user/addUserRepository';
+import { AddUserRepositoryParams } from '@/data/protocols/db/user/userRepository';
 
 export const mockAddUserRepositoryParams = (): AddUserRepositoryParams => ({
   email: faker.internet.email(),

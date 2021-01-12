@@ -1,39 +1,25 @@
 import { HasherSpy } from '@/data/tests/cryptography/hasherSpy';
 import { IDGeneratorSpy } from '@/data/tests/cryptography/idGenerator';
-import { AddUserRepositorySpy } from '@/data/tests/db/user/addUserRepositorySpy';
-import { GetUserByUsernameRepositorySpy } from '@/data/tests/db/user/getUserByUsernameRepositorySpy';
-import { GetUserByEmailRepositorySpy } from '@/data/tests/db/user/getUserEmailRepositorySpy';
 import { mockAddUserParams } from '@/data/tests/db/user/mockAddUserParams';
+import { UserRepositorySpy } from '@/data/tests/db/user/userRepositorySpy';
 import { ParamInUseError } from '@/domain/errors/user/paramInUse';
 
 import { AddUserService } from './addUser';
 
 type SutType = {
   sut: AddUserService;
-  getUserByEmailRepositorySpy: GetUserByEmailRepositorySpy;
-  getUserByUsernameRepositorySpy: GetUserByUsernameRepositorySpy;
+  userRepositorySpy: UserRepositorySpy;
   hasherSpy: HasherSpy;
   idGeneratorSpy: IDGeneratorSpy;
-  addUserRepositorySpy: AddUserRepositorySpy;
 };
 const makeSut = (): SutType => {
-  const getUserByEmailRepositorySpy = new GetUserByEmailRepositorySpy();
-  const getUserByUsernameRepositorySpy = new GetUserByUsernameRepositorySpy();
+  const userRepositorySpy = new UserRepositorySpy();
   const hasherSpy = new HasherSpy();
   const idGeneratorSpy = new IDGeneratorSpy();
-  const addUserRepositorySpy = new AddUserRepositorySpy();
-  const sut = new AddUserService(
-    getUserByEmailRepositorySpy,
-    getUserByUsernameRepositorySpy,
-    hasherSpy,
-    idGeneratorSpy,
-    addUserRepositorySpy
-  );
+  const sut = new AddUserService(userRepositorySpy, hasherSpy, idGeneratorSpy);
 
   return {
-    addUserRepositorySpy,
-    getUserByEmailRepositorySpy,
-    getUserByUsernameRepositorySpy,
+    userRepositorySpy,
     hasherSpy,
     sut,
     idGeneratorSpy,
@@ -42,30 +28,26 @@ const makeSut = (): SutType => {
 
 describe('AddUser use case', () => {
   it('Should call GetUserByEmailRepository with correct email', async () => {
-    const {
-      sut,
-      getUserByEmailRepositorySpy,
-      getUserByUsernameRepositorySpy,
-    } = makeSut();
+    const { sut, userRepositorySpy } = makeSut();
     const addUserParams = mockAddUserParams();
-    getUserByEmailRepositorySpy.simulateGetByEmail(addUserParams.email);
-    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
+    userRepositorySpy.simulateGetByEmail(addUserParams.email);
+    userRepositorySpy.simulateGetByUsernameReturnsUndefined();
 
     await sut.add(addUserParams);
 
-    expect(getUserByEmailRepositorySpy.email).toBe(addUserParams.email);
+    expect(userRepositorySpy.email).toBe(addUserParams.email);
   });
 
   it('Should throws if getUserByEmailRepository.getByEmail throws', async () => {
-    const { getUserByEmailRepositorySpy, sut } = makeSut();
-    getUserByEmailRepositorySpy.simulateGetByEmailThrowError();
+    const { userRepositorySpy, sut } = makeSut();
+    userRepositorySpy.simulateGetByEmailThrowError();
     const promise = sut.add(mockAddUserParams());
 
     await expect(promise).rejects.toThrowError();
   });
 
   it('Should throw if GetUserByEmailRepository.getByEmail returns a User', async () => {
-    const { getUserByEmailRepositorySpy, sut } = makeSut();
+    const { userRepositorySpy, sut } = makeSut();
 
     const promise = sut.add(mockAddUserParams());
 
@@ -73,32 +55,20 @@ describe('AddUser use case', () => {
   });
 
   it('Should call GetUserByUsernameRepository with correct username', async () => {
-    const {
-      getUserByUsernameRepositorySpy,
-      getUserByEmailRepositorySpy,
-      sut,
-    } = makeSut();
-    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
+    const { userRepositorySpy, sut } = makeSut();
+    userRepositorySpy.simulateGetByEmailReturnsUndefined();
     const addUserParams = mockAddUserParams();
-    getUserByUsernameRepositorySpy.simulateGetByUsername(
-      addUserParams.username
-    );
+    userRepositorySpy.simulateGetByUsername(addUserParams.username);
 
     await sut.add(addUserParams);
 
-    expect(getUserByUsernameRepositorySpy.username).toBe(
-      addUserParams.username
-    );
+    expect(userRepositorySpy.username).toBe(addUserParams.username);
   });
 
   it('Should throws if GetUserByUsernameRepository.getByUsername throws', async () => {
-    const {
-      getUserByUsernameRepositorySpy,
-      getUserByEmailRepositorySpy,
-      sut,
-    } = makeSut();
-    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
-    getUserByUsernameRepositorySpy.simulateGetByUsernameThrowError();
+    const { userRepositorySpy, sut } = makeSut();
+    userRepositorySpy.simulateGetByEmailReturnsUndefined();
+    userRepositorySpy.simulateGetByUsernameThrowError();
 
     const promise = sut.add(mockAddUserParams());
 
@@ -106,12 +76,8 @@ describe('AddUser use case', () => {
   });
 
   it('Should throw if GetUserByUsernameRepository.getByEmail returns a User', async () => {
-    const {
-      getUserByUsernameRepositorySpy,
-      getUserByEmailRepositorySpy,
-      sut,
-    } = makeSut();
-    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
+    const { userRepositorySpy, sut } = makeSut();
+    userRepositorySpy.simulateGetByEmailReturnsUndefined();
 
     const promise = sut.add(mockAddUserParams());
 
@@ -119,14 +85,9 @@ describe('AddUser use case', () => {
   });
 
   it('Should call Hasher with correct plaintext', async () => {
-    const {
-      getUserByEmailRepositorySpy,
-      getUserByUsernameRepositorySpy,
-      hasherSpy,
-      sut,
-    } = makeSut();
-    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
-    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
+    const { userRepositorySpy, hasherSpy, sut } = makeSut();
+    userRepositorySpy.simulateGetByEmailReturnsUndefined();
+    userRepositorySpy.simulateGetByUsernameReturnsUndefined();
 
     const addUserParams = mockAddUserParams();
     await sut.add(addUserParams);
@@ -135,14 +96,9 @@ describe('AddUser use case', () => {
   });
 
   it('Should throws if Hasher.hash throws', async () => {
-    const {
-      getUserByEmailRepositorySpy,
-      getUserByUsernameRepositorySpy,
-      hasherSpy,
-      sut,
-    } = makeSut();
-    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
-    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
+    const { userRepositorySpy, hasherSpy, sut } = makeSut();
+    userRepositorySpy.simulateGetByEmailReturnsUndefined();
+    userRepositorySpy.simulateGetByUsernameReturnsUndefined();
     hasherSpy.simulateHashThrowError();
 
     const promise = sut.add(mockAddUserParams());
@@ -151,14 +107,9 @@ describe('AddUser use case', () => {
   });
 
   it('Should throws if UuidProvider.uuidv4 throws', async () => {
-    const {
-      getUserByUsernameRepositorySpy,
-      getUserByEmailRepositorySpy,
-      sut,
-      idGeneratorSpy,
-    } = makeSut();
-    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
-    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
+    const { userRepositorySpy, sut, idGeneratorSpy } = makeSut();
+    userRepositorySpy.simulateGetByEmailReturnsUndefined();
+    userRepositorySpy.simulateGetByUsernameReturnsUndefined();
     idGeneratorSpy.simulateUuidv4ThrowError();
 
     const promise = sut.add(mockAddUserParams());
@@ -167,20 +118,15 @@ describe('AddUser use case', () => {
   });
 
   it('Should call AddUserRepository.save with correct params', async () => {
-    const {
-      getUserByUsernameRepositorySpy,
-      getUserByEmailRepositorySpy,
-      sut,
-      addUserRepositorySpy,
-    } = makeSut();
-    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
-    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
+    const { userRepositorySpy, sut } = makeSut();
+    userRepositorySpy.simulateGetByEmailReturnsUndefined();
+    userRepositorySpy.simulateGetByUsernameReturnsUndefined();
 
     const addUserParams = mockAddUserParams();
 
     await sut.add(addUserParams);
 
-    expect(addUserRepositorySpy.user).toEqual(
+    expect(userRepositorySpy.user).toEqual(
       expect.objectContaining({
         name: addUserParams.name,
         email: addUserParams.email,
@@ -190,15 +136,10 @@ describe('AddUser use case', () => {
   });
 
   it('Should throws if AddUserRepository.save throws', async () => {
-    const {
-      getUserByUsernameRepositorySpy,
-      getUserByEmailRepositorySpy,
-      sut,
-      addUserRepositorySpy,
-    } = makeSut();
-    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
-    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
-    addUserRepositorySpy.simulateSaveThrowError();
+    const { userRepositorySpy, sut } = makeSut();
+    userRepositorySpy.simulateGetByEmailReturnsUndefined();
+    userRepositorySpy.simulateGetByUsernameReturnsUndefined();
+    userRepositorySpy.simulateSaveThrowError();
 
     const promise = sut.add(mockAddUserParams());
 
@@ -206,16 +147,9 @@ describe('AddUser use case', () => {
   });
 
   it('Should return an AddUser.Result', async () => {
-    const {
-      getUserByUsernameRepositorySpy,
-      getUserByEmailRepositorySpy,
-      sut,
-      addUserRepositorySpy,
-      idGeneratorSpy,
-      hasherSpy,
-    } = makeSut();
-    getUserByEmailRepositorySpy.simulateGetByEmailReturnsUndefined();
-    getUserByUsernameRepositorySpy.simulateGetByUsernameReturnsUndefined();
+    const { userRepositorySpy, sut, idGeneratorSpy, hasherSpy } = makeSut();
+    userRepositorySpy.simulateGetByEmailReturnsUndefined();
+    userRepositorySpy.simulateGetByUsernameReturnsUndefined();
 
     const addUserParams = mockAddUserParams();
     const user = await sut.add(addUserParams);
