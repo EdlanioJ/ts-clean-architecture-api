@@ -70,4 +70,18 @@ describe('Login Routes', () => {
         .expect(401);
     });
   });
+
+  describe('POST /register', () => {
+    it('Should return 200 on register', async () => {
+      await request(app)
+        .post('/api/v1/register')
+        .send({
+          email: 'valid_mail@example.com',
+          name: 'Example Name',
+          username: 'example',
+          password: 'valid_password',
+        })
+        .expect(200);
+    });
+  });
 });
