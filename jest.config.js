@@ -1,3 +1,4 @@
+const path = require('path');
 module.exports = {
   clearMocks: true,
   coverageDirectory: 'coverage',
@@ -5,7 +6,12 @@ module.exports = {
     '@/(.*)': '<rootDir>/src/$1',
   },
   roots: ['<rootDir>/src'],
-  testEnvironment: 'node',
+  testEnvironment: path.resolve(
+    __dirname,
+    'prisma',
+    'prisma-test-environment.js'
+  ),
+  setupFilesAfterEnv: ['<rootDir>/setupTests.ts'],
   transform: {
     '.+\\.ts$': 'ts-jest',
   },
