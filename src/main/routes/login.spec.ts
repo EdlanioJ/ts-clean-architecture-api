@@ -83,5 +83,29 @@ describe('Login Routes', () => {
         })
         .expect(200);
     });
+
+    it('Should return 403 if email is already been used', async () => {
+      const password = await hash('valid_password', 12);
+      const id = v4();
+      await connection.user.create({
+        data: {
+          id,
+          email: 'invalid_mail@example.com',
+          name: 'Example Name',
+          username: 'invalid_username',
+          password,
+        },
+      });
+
+      await request(app)
+        .post('/api/v1/register')
+        .send({
+          email: 'invalid_mail@example.com',
+          name: 'Example Name',
+          username: 'valid',
+          password: 'valid_password',
+        })
+        .expect(403);
+    });
   });
 });
