@@ -36,5 +36,15 @@ describe('Login Routes', () => {
         })
         .expect(200);
     });
+
+    it('Should return 401 if invalid email', async () => {
+      await request(app)
+        .post('/api/v1/auth')
+        .send({
+          email: 'invalid_mail@example.com',
+          password: 'valid_password',
+        })
+        .expect(401);
+    });
   });
 });
