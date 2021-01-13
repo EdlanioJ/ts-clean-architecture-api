@@ -1,6 +1,6 @@
 {
   "*.ts": [
     "yarn eslint --fix",
-    "cross-env CI=true yarn test --bail --findRelatedTests --passWithNoTests"
+    "cross-env CI=true yarn test --bail --findRelatedTests --passWithNoTests --forceExit"
   ]
 }
