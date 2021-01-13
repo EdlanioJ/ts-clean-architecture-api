@@ -1,7 +1,7 @@
 import { UuidProvider } from './uuidProvider';
 
-jest.mock('uuidv4', () => ({
-  uuid: () => 'uuid',
+jest.mock('uuid', () => ({
+  v4: () => 'uuid',
 }));
 
 const makeSut = (): UuidProvider => {
