@@ -13,6 +13,7 @@ describe('Login Routes', () => {
   });
 
   afterEach(async () => {
+    await connection.user.deleteMany();
     await connection.$disconnect();
   });
   describe('POST /auth', () => {
@@ -43,6 +44,28 @@ describe('Login Routes', () => {
         .send({
           email: 'invalid_mail@example.com',
           password: 'valid_password',
+        })
+        .expect(401);
+    });
+
+    it('Should return 401 if invalid password', async () => {
+      const password = await hash('valid_password', 12);
+      const id = v4();
+      await connection.user.create({
+        data: {
+          id,
+          email: 'valid_mail@example.com',
+          name: 'Example Name',
+          username: 'example',
+          password,
+        },
+      });
+
+      await request(app)
+        .post('/api/v1/auth')
+        .send({
+          email: 'valid_mail@example.com',
+          password: 'invalid_password',
         })
         .expect(401);
     });
