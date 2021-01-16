@@ -30,4 +30,13 @@ describe('Forgot Password Service', () => {
 
     expect(userRepositorySpy.email).toBe(addUserParams.email);
   });
+
+  it('Should throws if userRepository.getByEmail throws', async () => {
+    const { sut, userRepositorySpy } = makeSut();
+    userRepositorySpy.simulateGetByEmailThrowError();
+
+    const promise = sut.add(mockAddUserParams().email);
+
+    await expect(promise).rejects.toThrowError();
+  });
 });
