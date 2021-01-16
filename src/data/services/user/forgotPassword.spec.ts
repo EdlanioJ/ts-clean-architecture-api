@@ -15,6 +15,7 @@ import { UnauthorizedError } from '@/domain/errors/user/unauthorized';
 class ForgotPasswordService {
   constructor(
     private readonly userRepository: UserRepository,
+    private readonly tokenRepository: TokenRepository,
     private readonly generateToken: GenerateToken
   ) {}
 
@@ -23,7 +24,9 @@ class ForgotPasswordService {
 
     if (!user) throw new UnauthorizedError('email');
 
-    await this.generateToken.generate();
+    const token = await this.generateToken.generate();
+
+    await this.tokenRepository.save({ token, user_id: user.id });
   }
 }
 
@@ -70,14 +73,20 @@ type SutType = {
   sut: ForgotPasswordService;
   userRepositorySpy: UserRepositorySpy;
   generateTokenSpy: GenerateTokenSpy;
+  tokenRepositorySpy: TokenRepositorySpy;
 };
 
 const makeSut = (): SutType => {
   const userRepositorySpy = new UserRepositorySpy();
   const generateTokenSpy = new GenerateTokenSpy();
-  const sut = new ForgotPasswordService(userRepositorySpy, generateTokenSpy);
+  const tokenRepositorySpy = new TokenRepositorySpy();
+  const sut = new ForgotPasswordService(
+    userRepositorySpy,
+    tokenRepositorySpy,
+    generateTokenSpy
+  );
 
-  return { sut, userRepositorySpy, generateTokenSpy };
+  return { sut, userRepositorySpy, generateTokenSpy, tokenRepositorySpy };
 };
 describe('Forgot Password Service', () => {
   it('Should call UserRepository getUserByEmail with correct email', async () => {
@@ -116,5 +125,23 @@ describe('Forgot Password Service', () => {
     const promise = sut.add(mockAddUserParams().email);
 
     await expect(promise).rejects.toThrowError();
+  });
+
+  it('Should call tokenRepository.save with correct email', async () => {
+    const {
+      sut,
+      tokenRepositorySpy,
+      generateTokenSpy,
+      userRepositorySpy,
+    } = makeSut();
+    const mockParams = mockAddUserParams();
+    await sut.add(mockParams.email);
+
+    expect(tokenRepositorySpy.saveParams).toEqual(
+      expect.objectContaining({
+        token: generateTokenSpy.token,
+        user_id: userRepositorySpy.user.id,
+      })
+    );
   });
 });
