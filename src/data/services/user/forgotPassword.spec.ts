@@ -127,7 +127,7 @@ describe('Forgot Password Service', () => {
     await expect(promise).rejects.toThrowError();
   });
 
-  it('Should call tokenRepository.save with correct email', async () => {
+  it('Should call tokenRepository.save with correct values', async () => {
     const {
       sut,
       tokenRepositorySpy,
