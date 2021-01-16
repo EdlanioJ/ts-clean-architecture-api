@@ -1,12 +1,15 @@
 import { UserRepository } from '@/data/protocols/db/user/userRepository';
 import { mockAddUserParams } from '@/data/tests/db/user/mockAddUserParams';
 import { UserRepositorySpy } from '@/data/tests/db/user/userRepositorySpy';
+import { UnauthorizedError } from '@/domain/errors/user/unauthorized';
 
 class ForgotPasswordService {
   constructor(private readonly userRepository: UserRepository) {}
 
   async add(email: string): Promise<void> {
-    await this.userRepository.getByEmail(email);
+    const user = await this.userRepository.getByEmail(email);
+
+    if (!user) throw new UnauthorizedError('email');
   }
 }
 
@@ -38,5 +41,15 @@ describe('Forgot Password Service', () => {
     const promise = sut.add(mockAddUserParams().email);
 
     await expect(promise).rejects.toThrowError();
+  });
+
+  it('Should throw if  userRepository.getByEmail returns undefined', async () => {
+    const { sut, userRepositorySpy } = makeSut();
+
+    userRepositorySpy.simulateGetByEmailReturnsUndefined();
+
+    const promise = sut.add(mockAddUserParams().email);
+
+    await expect(promise).rejects.toThrow(new UnauthorizedError('email'));
   });
 });
