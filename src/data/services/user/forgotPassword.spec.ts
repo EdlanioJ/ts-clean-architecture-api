@@ -1,8 +1,14 @@
 import faker from 'faker';
 
 import { GenerateToken } from '@/data/protocols/cryptography/generateToken';
+import { TokenModel } from '@/data/protocols/db/token/token';
+import {
+  AddTokenParams,
+  TokenRepository,
+} from '@/data/protocols/db/token/tokenRepository';
 import { UserRepository } from '@/data/protocols/db/user/userRepository';
 import { mockAddUserParams } from '@/data/tests/db/user/mockAddUserParams';
+import { mockUserModel } from '@/data/tests/db/user/user';
 import { UserRepositorySpy } from '@/data/tests/db/user/userRepositorySpy';
 import { UnauthorizedError } from '@/domain/errors/user/unauthorized';
 
@@ -34,6 +40,29 @@ class GenerateTokenSpy implements GenerateToken {
       .mockImplementationOnce(() => {
         throw new Error();
       });
+  }
+}
+const mockAddTokenParams = (): AddTokenParams => ({
+  token: faker.random.uuid(),
+  user_id: faker.random.uuid(),
+});
+
+const mockTokenModel = (): TokenModel => ({
+  created_at: new Date(),
+  id: faker.random.number(),
+  token: faker.random.uuid(),
+  user: mockUserModel(),
+});
+
+class TokenRepositorySpy implements TokenRepository {
+  saveParams = mockAddTokenParams();
+
+  tokenModel = mockTokenModel();
+
+  async save(params: AddTokenParams): Promise<TokenModel> {
+    this.saveParams = params;
+
+    return this.tokenModel;
   }
 }
 
