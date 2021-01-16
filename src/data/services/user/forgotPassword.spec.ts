@@ -67,6 +67,14 @@ class TokenRepositorySpy implements TokenRepository {
 
     return this.tokenModel;
   }
+
+  simulateThrowError() {
+    jest
+      .spyOn(TokenRepositorySpy.prototype, 'save')
+      .mockImplementationOnce(() => {
+        throw new Error();
+      });
+  }
 }
 
 type SutType = {
@@ -143,5 +151,14 @@ describe('Forgot Password Service', () => {
         user_id: userRepositorySpy.user.id,
       })
     );
+  });
+
+  it('Should throws if tokenRepository.save throws', async () => {
+    const { sut, tokenRepositorySpy } = makeSut();
+    tokenRepositorySpy.simulateThrowError();
+
+    const promise = sut.add(mockAddUserParams().email);
+
+    expect(promise).rejects.toThrowError();
   });
 });
