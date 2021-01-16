@@ -7,6 +7,7 @@ import {
   TokenRepository,
 } from '@/data/protocols/db/token/tokenRepository';
 import { UserRepository } from '@/data/protocols/db/user/userRepository';
+import { Sender, SendParams } from '@/data/protocols/messenger/sender';
 import { mockAddUserParams } from '@/data/tests/db/user/mockAddUserParams';
 import { mockUserModel } from '@/data/tests/db/user/user';
 import { UserRepositorySpy } from '@/data/tests/db/user/userRepositorySpy';
@@ -77,6 +78,17 @@ class TokenRepositorySpy implements TokenRepository {
   }
 }
 
+const mockSendParams = (): SendParams => ({
+  topic: 'send-email',
+  data: faker.random.objectElement(),
+});
+class SenderSpy implements Sender {
+  sendParams = mockSendParams();
+
+  async send(params: SendParams): Promise<void> {
+    Object.assign(this.sendParams, params);
+  }
+}
 type SutType = {
   sut: ForgotPasswordService;
   userRepositorySpy: UserRepositorySpy;
