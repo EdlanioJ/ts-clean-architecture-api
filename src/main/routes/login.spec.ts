@@ -8,10 +8,6 @@ import app from '../config/app';
 
 const connection = new PrismaClient();
 describe('Login Routes', () => {
-  beforeEach(async () => {
-    await connection.$disconnect();
-  });
-
   afterEach(async () => {
     await connection.user.deleteMany();
     await connection.$disconnect();
