@@ -12,8 +12,9 @@ import { mockAddUserParams } from '@/data/tests/db/user/mockAddUserParams';
 import { mockUserModel } from '@/data/tests/db/user/user';
 import { UserRepositorySpy } from '@/data/tests/db/user/userRepositorySpy';
 import { UnauthorizedError } from '@/domain/errors/user/unauthorized';
+import { ForgotPassword } from '@/domain/useCases/user/forgotPassword';
 
-class ForgotPasswordService {
+class ForgotPasswordService implements ForgotPassword {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly tokenRepository: TokenRepository,
@@ -21,7 +22,7 @@ class ForgotPasswordService {
     private readonly sender: Sender
   ) {}
 
-  async add(email: string): Promise<void> {
+  async add(email: ForgotPassword.Param): Promise<ForgotPassword.Result> {
     const user = await this.userRepository.getByEmail(email);
 
     if (!user) throw new UnauthorizedError('email');
@@ -100,6 +101,12 @@ class SenderSpy implements Sender {
 
   async send(params: SendParams): Promise<void> {
     Object.assign(this.sendParams, params);
+  }
+
+  simulateThrowError() {
+    jest.spyOn(SenderSpy.prototype, 'send').mockImplementationOnce(() => {
+      throw new Error();
+    });
   }
 }
 type SutType = {
@@ -215,5 +222,15 @@ describe('Forgot Password Service', () => {
         },
       })
     );
+  });
+
+  it('Should throw if sender.send throws', async () => {
+    const { sut, senderSpy } = makeSut();
+
+    senderSpy.simulateThrowError();
+
+    const promise = sut.add(mockAddUserParams().email);
+
+    await expect(promise).rejects.toThrowError();
   });
 });
