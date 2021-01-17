@@ -16,4 +16,14 @@ model user {
   password     String
   created_at   DateTime @default(now())
   updated_at   DateTime @default(now())
+  tokens       tokens[]
+}
+
+model tokens {
+  id         Int      @id @default(autoincrement())
+  token      String   @unique
+  user       user     @relation(fields: [user_id], references: [id])
+  user_id    String
+  created_at DateTime @default(now())
+
 }
