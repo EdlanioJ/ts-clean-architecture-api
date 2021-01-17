@@ -17,7 +17,8 @@ class ForgotPasswordService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly tokenRepository: TokenRepository,
-    private readonly generateToken: GenerateToken
+    private readonly generateToken: GenerateToken,
+    private readonly sender: Sender
   ) {}
 
   async add(email: string): Promise<void> {
@@ -27,7 +28,19 @@ class ForgotPasswordService {
 
     const token = await this.generateToken.generate();
 
-    await this.tokenRepository.save({ token, user_id: user.id });
+    const tokenData = await this.tokenRepository.save({
+      token,
+      user_id: user.id,
+    });
+
+    const template = 'reset_password';
+    const data = {
+      template,
+      token: tokenData.token,
+      user: { name: tokenData.user.name, email: tokenData.user.email },
+    };
+
+    await this.sender.send({ topic: 'send-email', data });
   }
 }
 
@@ -94,19 +107,29 @@ type SutType = {
   userRepositorySpy: UserRepositorySpy;
   generateTokenSpy: GenerateTokenSpy;
   tokenRepositorySpy: TokenRepositorySpy;
+  senderSpy: SenderSpy;
 };
 
 const makeSut = (): SutType => {
   const userRepositorySpy = new UserRepositorySpy();
   const generateTokenSpy = new GenerateTokenSpy();
   const tokenRepositorySpy = new TokenRepositorySpy();
+  const senderSpy = new SenderSpy();
+
   const sut = new ForgotPasswordService(
     userRepositorySpy,
     tokenRepositorySpy,
-    generateTokenSpy
+    generateTokenSpy,
+    senderSpy
   );
 
-  return { sut, userRepositorySpy, generateTokenSpy, tokenRepositorySpy };
+  return {
+    sut,
+    userRepositorySpy,
+    generateTokenSpy,
+    tokenRepositorySpy,
+    senderSpy,
+  };
 };
 describe('Forgot Password Service', () => {
   it('Should call UserRepository getUserByEmail with correct email', async () => {
@@ -172,5 +195,25 @@ describe('Forgot Password Service', () => {
     const promise = sut.add(mockAddUserParams().email);
 
     expect(promise).rejects.toThrowError();
+  });
+
+  it('Should call sender.send with correct values', async () => {
+    const { sut, senderSpy, tokenRepositorySpy } = makeSut();
+
+    await sut.add(mockAddUserParams().email);
+
+    expect(senderSpy.sendParams).toEqual(
+      expect.objectContaining({
+        topic: 'send-email',
+        data: {
+          template: 'reset_password',
+          token: tokenRepositorySpy.tokenModel.token,
+          user: {
+            name: tokenRepositorySpy.tokenModel.user.name,
+            email: tokenRepositorySpy.tokenModel.user.email,
+          },
+        },
+      })
+    );
   });
 });
