@@ -67,12 +67,23 @@ const makeSut = (): KafkaAdapter => {
 };
 
 describe('Kafka Adapter', () => {
-  it('Should call producer.connect()', async () => {
+  it('Should call producer with correct values', async () => {
     const sut = makeSut();
     const connectSpy = jest.spyOn(producerSpy, 'connect');
-    await sut.send(mockSendParams());
+    const disconnectSpy = jest.spyOn(producerSpy, 'disconnect');
+
+    const mockParams = mockSendParams();
+    const { topic, data } = mockParams;
+    await sut.send(mockParams);
 
     expect(connectSpy).toHaveBeenCalled();
+    expect(disconnectSpy).toHaveBeenCalled();
+    expect(producerSpy.sendParams).toEqual(
+      expect.objectContaining({
+        topic,
+        messages: [{ value: JSON.stringify(data) }],
+      })
+    );
   });
 
   it('Should throw producer.connect() throw', async () => {
@@ -83,21 +94,6 @@ describe('Kafka Adapter', () => {
     const promise = sut.send(mockSendParams());
 
     expect(promise).rejects.toThrowError();
-  });
-
-  it('Should call producer.send() with corrects values', async () => {
-    const sut = makeSut();
-
-    const mockParams = mockSendParams();
-    const { topic, data } = mockParams;
-    await sut.send(mockParams);
-
-    expect(producerSpy.sendParams).toEqual(
-      expect.objectContaining({
-        topic,
-        messages: [{ value: JSON.stringify(data) }],
-      })
-    );
   });
 
   it('Should call producer.send() with messages has any array', async () => {
@@ -127,15 +123,6 @@ describe('Kafka Adapter', () => {
     const promise = sut.send(mockSendParams());
 
     await expect(promise).rejects.toThrowError();
-  });
-
-  it('Should call producer.disconnect()', async () => {
-    const sut = makeSut();
-    const disconnectSpy = jest.spyOn(producerSpy, 'disconnect');
-
-    await sut.send(mockSendParams());
-
-    expect(disconnectSpy).toHaveBeenCalled();
   });
 
   it('Should throw if producer.disconnect() throw', async () => {
