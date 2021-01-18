@@ -37,9 +37,18 @@ class KafkaAdapter {
     await producer.connect();
 
     const { topic, data } = params;
-    const message = String(data);
 
-    await producer.send({ messages: [{ value: message }], topic });
+    const messages = [];
+
+    if (Array.isArray(data)) {
+      data.forEach((message) => {
+        messages.push({ value: String(message) });
+      });
+    } else {
+      messages.push({ value: String(data) });
+    }
+
+    await producer.send({ messages, topic });
   }
 }
 const kafkaConfig: KafkaConfig = {
