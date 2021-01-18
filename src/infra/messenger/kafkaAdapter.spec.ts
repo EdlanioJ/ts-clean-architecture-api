@@ -13,6 +13,10 @@ class ProducerSpy {
   async send(params: ProducerRecord) {
     this.sendParams = params;
   }
+
+  async disconnect() {
+    return Promise.resolve();
+  }
 }
 
 const producerSpy = new ProducerSpy();
@@ -49,6 +53,8 @@ class KafkaAdapter {
     }
 
     await producer.send({ messages, topic });
+
+    await producer.disconnect();
   }
 }
 const kafkaConfig: KafkaConfig = {
@@ -121,5 +127,14 @@ describe('Kafka Adapter', () => {
     const promise = sut.send(mockSendParams());
 
     await expect(promise).rejects.toThrowError();
+  });
+
+  it('Should call producer.disconnect()', async () => {
+    const sut = makeSut();
+    const disconnectSpy = jest.spyOn(producerSpy, 'disconnect');
+
+    await sut.send(mockSendParams());
+
+    expect(disconnectSpy).toHaveBeenCalled();
   });
 });
