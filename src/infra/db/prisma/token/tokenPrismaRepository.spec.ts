@@ -1,12 +1,26 @@
-import { AddTokenParams } from '@/data/protocols/db/token/tokenRepository';
+import faker from 'faker';
+
+import { TokenModel } from '@/data/protocols/db/token/token';
+import {
+  AddTokenParams,
+  TokenRepository,
+} from '@/data/protocols/db/token/tokenRepository';
 import { mockAddTokenParams } from '@/data/tests/db/token/mockAddTokenParams';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { mockTokenModel } from '@/data/tests/db/token/mockTokenModel';
+import { PrismaClient, Prisma, tokens as PrismaToken } from '@prisma/client';
 
 class PrismaTokensSpy {
   createParam: any;
 
-  create(params: Prisma.tokensCreateArgs) {
+  async create(params: Prisma.tokensCreateArgs): Promise<PrismaToken> {
     this.createParam = params;
+
+    return {
+      created_at: new Date(),
+      id: faker.random.number(),
+      token: params.data.token,
+      user_id: params.data.user.connect?.id as string,
+    };
   }
 }
 
@@ -18,15 +32,22 @@ jest.mock('@prisma/client', () => ({
   },
 }));
 
-class TokenPrismaRepository {
+class TokenPrismaRepository implements TokenRepository {
   constructor(private readonly prisma = new PrismaClient()) {}
 
-  async save(params: AddTokenParams): Promise<void> {
+  async save(params: AddTokenParams): Promise<TokenModel> {
     const { token, user_id } = params;
 
-    await this.prisma.tokens.create({
+    const tokenResult = await this.prisma.tokens.create({
       data: { token, user: { connect: { id: user_id } } },
     });
+
+    return {
+      id: tokenResult.id,
+      created_at: tokenResult.created_at,
+      token: tokenResult.token,
+      user: tokenResult.user_id,
+    };
   }
 }
 
@@ -64,5 +85,19 @@ describe('TokenPrismaRepository', () => {
     const promise = sut.save(mockAddTokenParams());
 
     await expect(promise).rejects.toThrowError();
+  });
+
+  it('Should return TokenModel', async () => {
+    const sut = makeSut();
+    const mockParams = mockAddTokenParams();
+
+    const tokenModel = await sut.save(mockParams);
+
+    expect(tokenModel).toEqual(
+      expect.objectContaining({
+        token: mockParams.token,
+        user: mockParams.user_id,
+      })
+    );
   });
 });
