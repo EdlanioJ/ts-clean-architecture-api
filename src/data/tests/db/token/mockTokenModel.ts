@@ -8,5 +8,5 @@ export const mockTokenModel = (): TokenModel => ({
   created_at: new Date(),
   id: faker.random.number(),
   token: faker.random.uuid(),
-  user: mockUserModel(),
+  user: faker.random.uuid(),
 });
