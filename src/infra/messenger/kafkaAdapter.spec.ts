@@ -1,4 +1,9 @@
-import kafka, { Kafka, KafkaConfig, ProducerRecord } from 'kafkajs';
+import kafka, {
+  Kafka,
+  KafkaConfig,
+  ProducerConfig,
+  ProducerRecord,
+} from 'kafkajs';
 
 import { SendParams } from '@/data/protocols/messenger/sender';
 import { mockSendParams } from '@/data/tests/messenger/senderSpy';
@@ -31,12 +36,15 @@ jest.mock('kafkajs', () => ({
 class KafkaAdapter {
   private readonly kafka: Kafka;
 
-  constructor(config: KafkaConfig) {
-    this.kafka = new Kafka(config);
+  producerConfig?: ProducerConfig;
+
+  constructor(kafkaConfig: KafkaConfig, producerConfig?: ProducerConfig) {
+    this.kafka = new Kafka(kafkaConfig);
+    this.producerConfig = producerConfig;
   }
 
   async send(params: SendParams): Promise<void> {
-    const producer = this.kafka.producer();
+    const producer = this.kafka.producer(this.producerConfig);
 
     await producer.connect();
 
