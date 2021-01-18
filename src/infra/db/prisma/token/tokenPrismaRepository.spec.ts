@@ -54,4 +54,15 @@ describe('TokenPrismaRepository', () => {
       })
     );
   });
+
+  it('Should throw if create throws', async () => {
+    const sut = makeSut();
+    jest.spyOn(primaTokensSpy, 'create').mockImplementationOnce(() => {
+      throw new Error();
+    });
+
+    const promise = sut.save(mockAddTokenParams());
+
+    await expect(promise).rejects.toThrowError();
+  });
 });
