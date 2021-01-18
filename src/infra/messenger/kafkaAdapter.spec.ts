@@ -72,13 +72,12 @@ describe('Kafka Adapter', () => {
 
   it('Should call producer.send() with corrects values', async () => {
     const sut = makeSut();
-    const sendSpy = jest.spyOn(producerSpy, 'send');
 
     const mockParams = mockSendParams();
     const { topic, data } = mockParams;
     await sut.send(mockParams);
 
-    expect(sendSpy).toHaveBeenLastCalledWith(
+    expect(producerSpy.sendParams).toEqual(
       expect.objectContaining({ topic, messages: [{ value: String(data) }] })
     );
   });
