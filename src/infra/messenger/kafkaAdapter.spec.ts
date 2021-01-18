@@ -4,10 +4,14 @@ import { SendParams } from '@/data/protocols/messenger/sender';
 import { mockSendParams } from '@/data/tests/messenger/senderSpy';
 
 class ProducerSpy {
-  sendCb: any;
+  sendParams: any;
 
   async connect() {
     return Promise.resolve();
+  }
+
+  async send(params: ProducerRecord) {
+    this.sendParams = params;
   }
 }
 
@@ -31,6 +35,11 @@ class KafkaAdapter {
     const producer = this.kafka.producer();
 
     await producer.connect();
+
+    const { topic, data } = params;
+    const message = String(data);
+
+    await producer.send({ messages: [{ value: message }], topic });
   }
 }
 const kafkaConfig: KafkaConfig = {
@@ -59,5 +68,18 @@ describe('Kafka Adapter', () => {
     const promise = sut.send(mockSendParams());
 
     expect(promise).rejects.toThrowError();
+  });
+
+  it('Should call producer.send() with corrects values', async () => {
+    const sut = makeSut();
+    const sendSpy = jest.spyOn(producerSpy, 'send');
+
+    const mockParams = mockSendParams();
+    const { topic, data } = mockParams;
+    await sut.send(mockParams);
+
+    expect(sendSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ topic, messages: [{ value: String(data) }] })
+    );
   });
 });
