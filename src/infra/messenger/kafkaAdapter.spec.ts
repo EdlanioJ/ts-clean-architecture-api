@@ -81,4 +81,15 @@ describe('Kafka Adapter', () => {
       expect.objectContaining({ topic, messages: [{ value: String(data) }] })
     );
   });
+
+  it('Should throw if producer.send() throw', async () => {
+    const sut = makeSut();
+    jest.spyOn(producerSpy, 'send').mockImplementationOnce(() => {
+      throw new Error();
+    });
+
+    const promise = sut.send(mockSendParams());
+
+    await expect(promise).rejects.toThrowError();
+  });
 });
