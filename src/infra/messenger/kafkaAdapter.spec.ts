@@ -42,10 +42,10 @@ class KafkaAdapter {
 
     if (Array.isArray(data)) {
       data.forEach((message) => {
-        messages.push({ value: String(message) });
+        messages.push({ value: JSON.stringify(message) });
       });
     } else {
-      messages.push({ value: String(data) });
+      messages.push({ value: JSON.stringify(data) });
     }
 
     await producer.send({ messages, topic });
@@ -87,7 +87,28 @@ describe('Kafka Adapter', () => {
     await sut.send(mockParams);
 
     expect(producerSpy.sendParams).toEqual(
-      expect.objectContaining({ topic, messages: [{ value: String(data) }] })
+      expect.objectContaining({
+        topic,
+        messages: [{ value: JSON.stringify(data) }],
+      })
+    );
+  });
+
+  it('Should call producer.send() with messages has any array', async () => {
+    const sut = makeSut();
+
+    const topic = 'send-email';
+    const data = [
+      { name: 'edlanio', email: 'edlanioj@gmail.com' },
+      { name: 'tercio', email: 'tercio.raimundo@gmail.com' },
+    ];
+
+    await sut.send({ topic, data });
+    expect(producerSpy.sendParams).toEqual(
+      expect.objectContaining({
+        topic,
+        messages: data.map((message) => ({ value: JSON.stringify(message) })),
+      })
     );
   });
 
