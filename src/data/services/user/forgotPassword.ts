@@ -29,7 +29,7 @@ export class ForgotPasswordService implements ForgotPassword {
     const data = {
       template,
       token: tokenData.token,
-      user: { name: tokenData.user.name, email: tokenData.user.email },
+      user: { name: user.name, email: user.email },
     };
 
     await this.sender.send({ topic: 'send-email', data });

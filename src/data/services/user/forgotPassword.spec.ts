@@ -105,7 +105,7 @@ describe('Forgot Password Service', () => {
   });
 
   it('Should call sender.send with correct values', async () => {
-    const { sut, senderSpy, tokenRepositorySpy } = makeSut();
+    const { sut, senderSpy, tokenRepositorySpy, userRepositorySpy } = makeSut();
 
     await sut.add(mockAddUserParams().email);
 
@@ -116,8 +116,8 @@ describe('Forgot Password Service', () => {
           template: 'reset_password',
           token: tokenRepositorySpy.tokenModel.token,
           user: {
-            name: tokenRepositorySpy.tokenModel.user.name,
-            email: tokenRepositorySpy.tokenModel.user.email,
+            name: userRepositorySpy.user.name,
+            email: userRepositorySpy.user.email,
           },
         },
       })
