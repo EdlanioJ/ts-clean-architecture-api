@@ -137,4 +137,15 @@ describe('Kafka Adapter', () => {
 
     expect(disconnectSpy).toHaveBeenCalled();
   });
+
+  it('Should throw if producer.disconnect() throw', async () => {
+    const sut = makeSut();
+    jest.spyOn(producerSpy, 'disconnect').mockImplementationOnce(() => {
+      throw new Error();
+    });
+
+    const promise = sut.send(mockSendParams());
+
+    await expect(promise).rejects.toThrowError();
+  });
 });
