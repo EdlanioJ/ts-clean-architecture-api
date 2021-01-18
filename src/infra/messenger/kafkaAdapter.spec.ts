@@ -50,4 +50,14 @@ describe('Kafka Adapter', () => {
 
     expect(connectSpy).toHaveBeenCalled();
   });
+
+  it('Should throw producer.connect() throw', async () => {
+    const sut = makeSut();
+    jest.spyOn(producerSpy, 'connect').mockImplementationOnce(() => {
+      throw new Error();
+    });
+    const promise = sut.send(mockSendParams());
+
+    expect(promise).rejects.toThrowError();
+  });
 });
