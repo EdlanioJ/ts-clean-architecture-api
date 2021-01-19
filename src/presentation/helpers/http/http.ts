@@ -3,6 +3,11 @@ import { HttpResponse } from '@/presentation/protocols/http';
 
 export const ok = (data: any): HttpResponse => ({ data, statusCode: 200 });
 
+export const noContent = (): HttpResponse => ({
+  statusCode: 204,
+  data: null,
+});
+
 export const unauthorized = (error: any): HttpResponse => ({
   data: { message: error.message, ...error },
   statusCode: 401,
