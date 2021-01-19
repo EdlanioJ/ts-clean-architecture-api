@@ -1,8 +1,7 @@
-import crypto, { randomBytes } from 'crypto';
+import crypto from 'crypto';
 import faker from 'faker';
-import { promisify } from 'util';
 
-import { GenerateToken } from '@/data/protocols/cryptography/generateToken';
+import { CryptoProvider } from './cryptoAdapter';
 
 jest.mock('crypto', () => ({
   randomBytes: (size: number) => {
@@ -17,15 +16,6 @@ jest.mock('util', () => ({
   },
 }));
 
-class CryptoProvider implements GenerateToken {
-  async generate(): Promise<string> {
-    const random = await promisify(randomBytes)(24);
-
-    const token = random.toString('hex');
-
-    return token;
-  }
-}
 const makeSut = (): CryptoProvider => {
   return new CryptoProvider();
 };
