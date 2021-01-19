@@ -2,14 +2,21 @@ import faker from 'faker';
 
 import { mockAddTokenParams } from '@/data/tests/db/token/mockAddTokenParams';
 import { ForgotPassword } from '@/domain/useCases/user/forgotPassword';
-import { HttpRequest } from '@/presentation/protocols/http';
+import { serverError } from '@/presentation/helpers/http/http';
+import { HttpRequest, HttpResponse } from '@/presentation/protocols/http';
 
 class ForgotPasswordController {
   constructor(private readonly forgotPassword: ForgotPassword) {}
 
-  async handle(httpRequest: HttpRequest): Promise<void> {
-    const { email } = httpRequest.body;
-    await this.forgotPassword.add(email);
+  async handle(httpRequest: HttpRequest): Promise<undefined | HttpResponse> {
+    try {
+      const { email } = httpRequest.body;
+      await this.forgotPassword.add(email);
+
+      return undefined;
+    } catch (error) {
+      return serverError(error);
+    }
   }
 }
 
@@ -49,5 +56,15 @@ describe('ForgotPasswordController', () => {
     await sut.handle(mockParam);
 
     expect(forgotPasswordSpy.email).toBe(mockParam.body.email);
+  });
+
+  it('Should return return 500 if ForgotPassword throw', async () => {
+    const { forgotPasswordSpy, sut } = makeSut();
+    jest.spyOn(forgotPasswordSpy, 'add').mockImplementationOnce(() => {
+      throw new Error();
+    });
+    const httpresponse = await sut.handle(mockRequest());
+
+    await expect(httpresponse).toEqual(serverError(new Error()));
   });
 });
