@@ -3,18 +3,22 @@ import faker from 'faker';
 import { mockAddTokenParams } from '@/data/tests/db/token/mockAddTokenParams';
 import { UnauthorizedError } from '@/domain/errors/user/unauthorized';
 import { ForgotPassword } from '@/domain/useCases/user/forgotPassword';
-import { serverError, unauthorized } from '@/presentation/helpers/http/http';
+import {
+  serverError,
+  unauthorized,
+  noContent,
+} from '@/presentation/helpers/http/http';
 import { HttpRequest, HttpResponse } from '@/presentation/protocols/http';
 
 class ForgotPasswordController {
   constructor(private readonly forgotPassword: ForgotPassword) {}
 
-  async handle(httpRequest: HttpRequest): Promise<undefined | HttpResponse> {
+  async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
       const { email } = httpRequest.body;
       await this.forgotPassword.add(email);
 
-      return undefined;
+      return noContent();
     } catch (error) {
       if (error.name === 'UnauthorizedError') {
         return unauthorized(error);
@@ -52,14 +56,15 @@ const makeSut = (): SutType => {
 };
 
 describe('ForgotPasswordController', () => {
-  it('Should call ForgotPassword with correct values', async () => {
+  it('Should call ForgotPassword and return 204', async () => {
     const { forgotPasswordSpy, sut } = makeSut();
 
     const mockParam = mockRequest();
 
-    await sut.handle(mockParam);
+    const httpResponse = await sut.handle(mockParam);
 
     expect(forgotPasswordSpy.email).toBe(mockParam.body.email);
+    expect(httpResponse).toEqual(noContent());
   });
 
   it('Should return return 500 if ForgotPassword throw', async () => {
