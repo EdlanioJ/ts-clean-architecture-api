@@ -12,11 +12,7 @@ const prismaUserSpy = new PrismaUserSpy();
 
 jest.mock('@prisma/client', () => ({
   PrismaClient: class {
-    user = {
-      create: (value: Prisma.userCreateArgs) => prismaUserSpy.create(value),
-      findUnique: (value: Prisma.FindUniqueuserArgs) =>
-        prismaUserSpy.findUnique(value),
-    };
+    user = prismaUserSpy;
   },
 }));
 
