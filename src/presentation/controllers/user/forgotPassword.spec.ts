@@ -1,6 +1,5 @@
 import faker from 'faker';
 
-import { mockAddTokenParams } from '@/data/tests/db/token/mockAddTokenParams';
 import { UnauthorizedError } from '@/domain/errors/user/unauthorized';
 import { ForgotPassword } from '@/domain/useCases/user/forgotPassword';
 import {
@@ -8,25 +7,9 @@ import {
   unauthorized,
   noContent,
 } from '@/presentation/helpers/http/http';
-import { HttpRequest, HttpResponse } from '@/presentation/protocols/http';
+import { HttpRequest } from '@/presentation/protocols/http';
 
-class ForgotPasswordController {
-  constructor(private readonly forgotPassword: ForgotPassword) {}
-
-  async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
-    try {
-      const { email } = httpRequest.body;
-      await this.forgotPassword.add(email);
-
-      return noContent();
-    } catch (error) {
-      if (error.name === 'UnauthorizedError') {
-        return unauthorized(error);
-      }
-      return serverError(error);
-    }
-  }
-}
+import { ForgotPasswordController } from './forgotPassword';
 
 class ForgotPasswordSpy implements ForgotPassword {
   email = faker.internet.email();
