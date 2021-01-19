@@ -1,8 +1,9 @@
 import faker from 'faker';
 
 import { mockAddTokenParams } from '@/data/tests/db/token/mockAddTokenParams';
+import { UnauthorizedError } from '@/domain/errors/user/unauthorized';
 import { ForgotPassword } from '@/domain/useCases/user/forgotPassword';
-import { serverError } from '@/presentation/helpers/http/http';
+import { serverError, unauthorized } from '@/presentation/helpers/http/http';
 import { HttpRequest, HttpResponse } from '@/presentation/protocols/http';
 
 class ForgotPasswordController {
@@ -15,6 +16,9 @@ class ForgotPasswordController {
 
       return undefined;
     } catch (error) {
+      if (error.name === 'UnauthorizedError') {
+        return unauthorized(error);
+      }
       return serverError(error);
     }
   }
@@ -65,6 +69,17 @@ describe('ForgotPasswordController', () => {
     });
     const httpresponse = await sut.handle(mockRequest());
 
-    await expect(httpresponse).toEqual(serverError(new Error()));
+    expect(httpresponse).toEqual(serverError(new Error()));
+  });
+
+  it('Should return 401 if ForgotPassword throws an UnauthorizedError', async () => {
+    const { forgotPasswordSpy, sut } = makeSut();
+    jest.spyOn(forgotPasswordSpy, 'add').mockImplementationOnce(() => {
+      throw new UnauthorizedError('email');
+    });
+
+    const httpResponse = await sut.handle(mockRequest());
+
+    expect(httpResponse).toEqual(unauthorized(new UnauthorizedError('email')));
   });
 });
