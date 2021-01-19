@@ -2,6 +2,8 @@ import crypto, { randomBytes } from 'crypto';
 import faker from 'faker';
 import { promisify } from 'util';
 
+import { GenerateToken } from '@/data/protocols/cryptography/generateToken';
+
 jest.mock('crypto', () => ({
   randomBytes: (size: number) => {
     const random = faker.random.alphaNumeric(size);
@@ -15,9 +17,13 @@ jest.mock('util', () => ({
   },
 }));
 
-class CryptoProvider {
-  async generate(): Promise<void> {
-    await promisify(randomBytes)(24);
+class CryptoProvider implements GenerateToken {
+  async generate(): Promise<string> {
+    const random = await promisify(randomBytes)(24);
+
+    const token = random.toString('hex');
+
+    return token;
   }
 }
 const makeSut = (): CryptoProvider => {
@@ -28,8 +34,9 @@ describe('CryptoProvider', () => {
     const sut = makeSut();
     const randomBytesSpy = jest.spyOn(crypto, 'randomBytes');
 
-    await sut.generate();
+    const token = await sut.generate();
 
     expect(randomBytesSpy).toHaveBeenCalledWith(24);
+    expect(typeof token).toBe('string');
   });
 });
