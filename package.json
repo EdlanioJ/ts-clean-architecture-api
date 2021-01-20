@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "dev": "tsnd --respawn --transpile-only --ignore-watch node_modules -r tsconfig-paths/register src/main/server.ts"
   },
   "keywords": [],
   "author": "",
