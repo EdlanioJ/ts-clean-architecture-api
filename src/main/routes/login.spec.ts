@@ -1,3 +1,4 @@
+import '@/main/test/mock/kafka';
 import { hash } from 'bcryptjs';
 import request from 'supertest';
 import { v4 } from 'uuid';
@@ -9,6 +10,7 @@ import app from '../config/app';
 const connection = new PrismaClient();
 describe('Login Routes', () => {
   afterEach(async () => {
+    await connection.tokens.deleteMany();
     await connection.user.deleteMany();
     await connection.$disconnect();
   });
@@ -137,6 +139,26 @@ describe('Login Routes', () => {
           email: 'invalid_mail@example.com',
         })
         .expect(401);
+    });
+
+    it('Should return 204 on success', async () => {
+      const id = v4();
+      await connection.user.create({
+        data: {
+          id,
+          email: 'edlanioj@gmail.com',
+          name: 'Edlânio Manuel',
+          password: 'password',
+          username: 'edlanioj',
+        },
+      });
+
+      await request(app)
+        .post('/api/v1/forgot-password')
+        .send({
+          email: 'edlanioj@gmail.com',
+        })
+        .expect(204);
     });
   });
 });
