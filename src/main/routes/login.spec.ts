@@ -128,4 +128,15 @@ describe('Login Routes', () => {
         .expect(403);
     });
   });
+
+  describe('POST /forgot-password', () => {
+    it('Should return 401 if invalid email', async () => {
+      await request(app)
+        .post('/api/v1/forgot-password')
+        .send({
+          email: 'invalid_mail@example.com',
+        })
+        .expect(401);
+    });
+  });
 });
